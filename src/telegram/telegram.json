@@ -1,0 +1,74 @@
+[
+    {
+        "Mint": "8HY8exSJzsBgDoi8JRT1CX5buUzWiWEoBgQpPMNyvp6F",
+        "Name": "EL GATO",
+        "Symbol": "GATO",
+        "Description": "IS JUST A GATO....",
+        "Creator": "9HnRpkm4y3PzKuNid4xA6hivPNT1wfTYzG6ckvtKyUCe",
+        "Cap": "$3558.06",
+        "Whale": "5rHS4 owns 3.57% of supply",
+        "Dev": "1.38%",
+        "Bought": false
+    },
+    {
+        "Mint": "ChTcVrRFtGGZDbcdVuWMBTcG6zh3NUBHawkjPwzrqqPq",
+        "Name": "M\u0101oku",
+        "Symbol": "m\u0101oku",
+        "Description": "M\u0101oku is a electric ...",
+        "Creator": "HV8wiTPU9epu2g8tfcbhxb4WQRCaHTc3bJv9s9fZJW61",
+        "Cap": "$4982.27",
+        "Dev": "9.75%",
+        "Bought": false
+    },
+    {
+        "Mint": "DGmhc27FoqTcPn7uDKjBtBc9tn37xoDX6YnhCN22hX6M",
+        "Name": "Apple Gun Bot",
+        "Symbol": "Apple Gun",
+        "Description": "Apple Gun Bot is the...",
+        "Creator": "Cb22EE5mJKADwX4B6FXDcHm3zvAv4eBufYikqbu8ykcA",
+        "Cap": "$3706.65",
+        "Dev": "2.17%",
+        "Bought": false
+    },
+    {
+        "Mint": "CLqXGbcsWq5Pnx9a9qRqsmRVB7jiZXhGXFe1v6rijcPq",
+        "Name": "HODL",
+        "Symbol": "HODL",
+        "Description": "$HODL IS HERE ON SOL...",
+        "Creator": "E8ovXxZQqJFJtPAppMJhysuVCs1cW7JkMYpFzQJDC8No",
+        "Cap": "$3621.31",
+        "Whale": "Ho8mY owns 9.60% of supply",
+        "Dev": "0.89%",
+        "Bought": false
+    },
+    {
+        "Mint": "9oWYNDzWGBbUFCTHZSz6uj7Tbp53BmeSgW7YwNPLuNYF",
+        "Name": "THEFRANC",
+        "Symbol": "$FRANC",
+        "Description": "We're da prezzies of...",
+        "Creator": "GG9gAx6AVXfoQLXv4MoZFncqHPADzdjD7CN8hVLtzeGe",
+        "Cap": "$4312.80",
+        "Dev": "5.11%",
+        "Bought": false
+    },
+    {
+        "Mint": "49GKsjqDdje1qEpSXzY3e4jMdsybB2uRKKix9p7nGV48",
+        "Name": "1may",
+        "Symbol": "1may",
+        "Description": "wake up, its the fir...",
+        "Creator": "2CKpzzBQ5wC1Zcn9iU5cP5fhBCZsWc9choAh1iF4N13j",
+        "Cap": "$4463.02",
+        "Dev": "6.71%",
+        "Bought": false
+    },
+    {
+        "Mint": "63v3xAj5mhXpb6JHxZqiJApq72986Lz2ndFaFy57F9RS",
+        "Name": "MoonBull",
+        "Symbol": "Moon",
+        "Description": "What did the crypto ...",
+        "Creator": "FpUdpt6mvs3tyQuxfMrN57BYxNyw3EPMf3ZBJBcDNUxC",
+        "Cap": "$3561.70",
+        "Dev": "4.78%",
+        "Bought": false
+    }
+]
