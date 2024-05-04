@@ -35,36 +35,50 @@ class Trade:
 
         solana_tracker = SolanaTracker(keypair, "https://rpc.solanatracker.io/public?advancedTx=true")
 
-        rate_response = await solana_tracker.get_rate(
-            os.getenv("SOLANA_WALLET_ADDRESS"),  # From Token
-            coin_address,  # To Token
-            float(os.getenv("AMOUNT_TO_BUY")),  # Amount to swap
-            float(os.getenv("SLIPPAGE_RATE")),  # Slippage
-        )
+        retry_count = 3
+        rate_response = None
+        while retry_count > 0:
+            try:
+                rate_response = await solana_tracker.get_rate(
+                    os.getenv("SOLANA_WALLET_ADDRESS"),  # From Token
+                    coin_address,  # To Token
+                    float(os.getenv("AMOUNT_TO_BUY")),  # Amount to swap
+                    float(os.getenv("SLIPPAGE_RATE")),  # Slippage
+                )
+                break  # Exit the loop if successful
+            except Exception as e:
+                print(f"Error fetching rate: {e}")
+                retry_count -= 1
+                if retry_count > 0:
+                    print(f"Retrying... {retry_count} retries left.")
+                    await asyncio.sleep(5)  # Wait for 5 seconds before retrying
+                else:
+                    print("No more retries left. Exiting.")
 
-        self.ammountIn = rate_response['amountIn']
-        self.ammountOut = rate_response['amountOut']
-        self.minAmountOut = rate_response['minAmountOut']
-        self.currentPrice = rate_response['currentPrice']
-        self.executionPrice = rate_response['executionPrice']
-        self.priceImpact = rate_response['priceImpact']
-        self.isPumpFun = rate_response['isPumpFun']
-        self.platformFee = rate_response['platformFee']
-        self.fee = rate_response['fee']
-        self.baseCurrency = rate_response['baseCurrency']['mint']
-        self.quoteCurrency = rate_response['quoteCurrency']['mint']
+        if rate_response:
+            self.ammountIn = rate_response['amountIn']
+            self.ammountOut = rate_response['amountOut']
+            self.minAmountOut = rate_response['minAmountOut']
+            self.currentPrice = rate_response['currentPrice']
+            self.executionPrice = rate_response['executionPrice']
+            self.priceImpact = rate_response['priceImpact']
+            self.isPumpFun = rate_response['isPumpFun']
+            self.platformFee = rate_response['platformFee']
+            self.fee = rate_response['fee']
+            self.baseCurrency = rate_response['baseCurrency']['mint']
+            self.quoteCurrency = rate_response['quoteCurrency']['mint']
 
-        if process == "buy" and new_coin_id is not None:
-            self.db.add_new_record_transactions("transactions", rate_response, new_coin_id=new_coin_id)
+            if process == "buy" and new_coin_id is not None:
+                self.db.add_new_record_transactions("transactions", rate_response, new_coin_id=new_coin_id)
 
-        if process == "update" and new_coin_id is not None:
-            profit = self.profit_percentage(transaction['price_bought'])
-            if profit >= 200:
-                self.db.update_transaction_to_sold(transaction['id'])
-            elif profit == 0:
-                self.sell_no_profit(transaction)
+            if process == "update" and new_coin_id is not None:
+                profit = self.profit_percentage(transaction['price_bought'])
+                if profit >= 200:
+                    self.db.update_transaction_to_sold(transaction['id'])
+                elif profit == 0:
+                    self.sell_no_profit(transaction)
 
-            self.db.update_transaction_by_id(new_coin_id, rate_response['amountOut'], profit)
+                self.db.update_transaction_by_id(new_coin_id, rate_response['amountOut'], profit)
 
         return rate_response
 
@@ -160,8 +174,6 @@ class Trade:
         return await self.rug_check.check_rug(mint_address)
 
     async def calculate_rates_for_coin_addresses(self, transactions) -> list:
-        for transaction in transactions:
-            print(transaction)
         tasks = [self.calculate_rate_coin(transaction['mint_address'], process="update", new_coin_id=transaction['id'],
                                           transaction=transaction) for transaction in transactions]
         result_tuples = await asyncio.gather(*tasks)
