@@ -28,6 +28,7 @@ def create_tables():
                 creator VARCHAR(255) NOT NULL,
                 cap VARCHAR(255) NOT NULL,
                 dev_percentage VARCHAR(255) NOT NULL
+                start_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             )
         """
 
@@ -40,6 +41,9 @@ def create_tables():
                 price_updated FLOAT NOT NULL,
                 profit FLOAT NOT NULL,
                 sold BOOLEAN NOT NULL
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                mint_address VARCHAR(255) NOT NULL,
             )
         """
 
