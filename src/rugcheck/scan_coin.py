@@ -4,6 +4,7 @@ import time
 from bs4 import BeautifulSoup
 from pyppeteer import launch
 
+
 class RugChecker:
     def __init__(self):
         self.mint_address = None
@@ -13,7 +14,7 @@ class RugChecker:
         browser = await self.launch_browser()
         page = await browser.newPage()
         await page.goto(self.url)
-        time.sleep(1)  # Replaced asyncio.sleep with time.sleep
+        await asyncio.sleep(5)  # Replaced asyncio.sleep with time.sleep
         content = await page.content()
         await browser.close()
         return content
@@ -23,6 +24,7 @@ class RugChecker:
 
     async def check_rug(self, mint_address):
         self.mint_address = mint_address
+        self.url = f"https://rugcheck.xyz/tokens/{self.mint_address}"
         page_source = await self.fetch_page_source()
 
         soup = BeautifulSoup(page_source, 'html.parser')

@@ -58,7 +58,7 @@ class TelegramMessageFetcher:
             if messages:
                 for message in reversed(messages):
                     msg = self.parse_message(message)
-                    if self.trade.calculate_swap_coin(msg):
+                    if await self.trade.calculate_swap_coin(msg):
                         new_coin_id = self.transactions.add_new_record("coins", msg.__dict__)
                         await self.trade.calculate_rate_coin(msg.mint_address, process="buy", new_coin_id=new_coin_id)
 

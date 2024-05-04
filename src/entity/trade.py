@@ -73,7 +73,7 @@ class Trade:
         updated_at = datetime.strptime(transaction['updated_at'], "%Y-%m-%d %H:%M:%S.%f")
         time_diff = updated_at - created_at
 
-        if time_diff.total_seconds() == 120:
+        if time_diff.total_seconds() >= 120:
             self.db.update_transaction_to_sold(transaction['id'])
 
     def profit_percentage(self, priceBought):
