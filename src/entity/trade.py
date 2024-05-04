@@ -29,6 +29,9 @@ class Trade:
         self.db = Transactions()
         self.rug_check = RugChecker()
 
+    """
+        Calculates the rate of a coin.
+    """
     async def calculate_rate_coin(self, coin_address, process=None, new_coin_id=None, transaction=None) -> dict:
         keypair = Keypair.from_base58_string(
             "3xmbhcrVadA6vy1vtAdnJP7PjH7WogJ42YXR55NK4YZvjaJ22ypR3Xabnj2AEMhB9dgLwauLochDW2h9gJw9ERWn")
@@ -82,6 +85,9 @@ class Trade:
 
         return rate_response
 
+    """
+        Sells a coin if there is no profit within 2 minutes.
+    """
     def sell_no_profit(self, transaction):
         created_at = transaction['created_at']
         updated_at = transaction['updated_at']
@@ -90,9 +96,15 @@ class Trade:
         if time_diff.total_seconds() >= 120:
             self.db.update_transaction_to_sold(transaction['id'])
 
+    """
+        Calculates the profit percentage.
+    """
     def profit_percentage(self, priceBought):
         return ((self.ammountOut - priceBought) / priceBought) * 100
 
+    """
+        Buys a coin and returns the swap response. We dont use at the moments
+    """
     async def buy_coin(self) -> dict:
         keypair = Keypair.from_base58_string(os.getenv("PAYER_PUBLIC_KEY"))
 
@@ -125,6 +137,9 @@ class Trade:
 
         return swap_response
 
+    """
+        Buys a coin and returns the swap response. We dont use at the moments
+    """
     async def sell_coin(self) -> dict:
         keypair = Keypair.from_base58_string(os.getenv("PAYER_PUBLIC_KEY"))
 
@@ -155,6 +170,9 @@ class Trade:
 
         return swap_response
 
+    """
+        Calculates whether to buy a coin or not.
+    """
     async def calculate_swap_coin(self, message) -> bool:
         try:
             dev_percentage = float(message.dev_percentage)
@@ -170,8 +188,15 @@ class Trade:
             return True
         return False
 
+    """
+        Checks the holders of a coin for rug pulling.
+    """
     async def rug_check_holders(self, mint_address):
         return await self.rug_check.check_rug(mint_address)
+
+    """
+        Main function to calculates rates for multiple coin addresses, for update the coin . 
+    """
 
     async def calculate_rates_for_coin_addresses(self, transactions) -> list:
         tasks = [self.calculate_rate_coin(transaction['mint_address'], process="update", new_coin_id=transaction['id'],

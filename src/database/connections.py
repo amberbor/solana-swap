@@ -4,8 +4,12 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+
 class DatabaseManager:
     def __init__(self):
+        """
+        Initializes the DatabaseManager class with database connection parameters.
+        """
         self.db_params = {
             'dbname': os.getenv('DB_NAME'),
             'user': os.getenv('DB_USER'),
@@ -16,25 +20,20 @@ class DatabaseManager:
         self.connection_pool = self.create_pool()
 
     def create_pool(self):
+        """
+        Creates a connection pool for managing database connections.
+        """
         return pool.SimpleConnectionPool(1, 10, **self.db_params)
 
     def get_connection(self):
+        """
+        Retrieves a connection from the connection pool.
+        """
         return self.connection_pool.getconn()
 
     def close_connection(self, conn):
+        """
+        Closes a database connection and returns it to the connection pool.
+        """
         conn.cursor().close()
         self.connection_pool.putconn(conn)
-
-
-# connection_pool = create_pool()
-#
-# conn = get_connection(connection_pool)
-#
-# try:
-#     cur = conn.cursor()
-#     cur.execute("SELECT * FROM my_table")
-#     rows = cur.fetchall()
-#     for row in rows:
-#         print(row)
-# finally:
-#     close_connection(connection_pool, conn, cur)
