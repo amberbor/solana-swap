@@ -2,70 +2,111 @@ import asyncio
 import json
 import os
 import re
+import time
+
 from dotenv import load_dotenv
 from telethon.sync import TelegramClient
 from src.database.transactions import Transactions
+from src.entity.trade import Trade
 
 load_dotenv()
+
 class Message:
-    def __init__(self, mint=None, name=None, symbol=None, creator=None, dev_percentage=None, bought=False, cap=None):
-        self.mint = mint
-        self.name = name
-        self.symbol = symbol
-        self.creator = creator
-        self.cap = cap
-        self.dev_percentage = dev_percentage
-        self.bought = bought
+    def __init__(self, **kwargs):
+        self.mint_address = kwargs.get('mint_address')
+        self.name = kwargs.get('name')
+        self.symbol = kwargs.get('symbol')
+        self.creator = kwargs.get('creator')
+        self.cap = kwargs.get('cap')
+        self.dev_percentage = kwargs.get('dev_percentage', "0%")
+        self.bought = kwargs.get('bought')
 
 class TelegramMessageFetcher:
+    attribute_map = {
+        'Mint': 'mint_address',
+        'Name': 'name',
+        'Symbol': 'symbol',
+        'Creator': 'creator',
+        'Cap': 'cap',
+        'Dev': 'dev_percentage',
+        'Bought': 'bought'
+    }
+
     def __init__(self, api_id, api_hash, phone_number):
         self.api_id = api_id
         self.api_hash = api_hash
         self.phone_number = phone_number
         self.client = TelegramClient('session_' + phone_number, api_id, api_hash)
         self.transactions = Transactions()
+        self.last_message_id = None
+        self.trade = Trade()
 
-    async def fetch_messages(self, chat_id, output_file):
+    async def fetch_messages(self, chat_id, output_file, limit=100):
         await self.client.connect()
 
         if not await self.client.is_user_authorized():
             await self.client.send_code_request(self.phone_number)
             await self.client.sign_in(self.phone_number, input('Enter the code: '))
 
-        last_message_id = (await self.client.get_messages(chat_id, limit=1))[0].id
-
         while True:
-            print("Checking for messages and forwarding them...")
 
-            messages = await self.client.get_messages(chat_id, min_id=last_message_id, limit=None)
+            if self.last_message_id is not None:
+                messages = await self.client.get_messages(chat_id, min_id=self.last_message_id, limit=100)
+            else:
+                messages = await self.client.get_messages(chat_id, limit=100)
 
-            for message in reversed(messages):
-                msg = self.parse_message(message)
-                self.transactions.add_new_record("messages", msg.__dict__)
+            if messages:
+                for message in reversed(messages):
+                    msg = self.parse_message(message)
+                    if self.trade.calculate_swap_coin(msg):
+                        new_coin_id = self.transactions.add_new_record("coins", msg.__dict__)
+                        await self.trade.calculate_rate_coin(msg.mint_address, process="buy", new_coin_id=new_coin_id)
 
-            print(f"All messages from chat {chat_id} saved to {output_file}.")
-
+                self.last_message_id = messages[-1].id
+                print(f"All messages from chat {chat_id} saved to {output_file}.")
+            else:
+                print("No new messages found.")
 
     def parse_message(self, message):
-        msg = Message()
+        kwargs = {}
         for line in message.raw_text.split('\n'):
             if line.strip():
                 key, value = line.split(': ', 1)
                 key = key.split(' ')[-1]
-                if key == 'Dev' or key == 'Whale':
-                    percentage = re.search(r'[\d.]+%', value)
-                    if percentage:
-                        value = percentage.group()
-                setattr(msg, key.strip(), value.strip("`"))
-        return msg
+                if key in self.attribute_map:
+                    if key == 'Dev' or key == 'Whale':
+                        percentage = re.search(r'[\d.]+%', value)
+                        if percentage:
+                            value_group = percentage.group()
+                            if value_group == '0%':
+                                value = "0"
+                            else:
+                                value = value_group.replace("%", "")
+
+                        else:
+                            value = "0"
+                    elif key == 'Cap':
+                        value = value.replace("$", "")
+                    kwargs[self.attribute_map[key]] = value.strip("`")
+        return Message(**kwargs)
+
 async def main():
     fetcher = TelegramMessageFetcher(os.getenv("API_TELEGRAM"), os.getenv("HASH_TELEGRAM"), os.getenv("PHONE_NUMBER"))
 
     chat_id = int(os.getenv("CHAT_ID"))
     output_file = "telegram.json"
 
-    await fetcher.fetch_messages(chat_id, output_file)
+    while True:
+        start_time = time.time()
 
+        await fetcher.fetch_messages(chat_id, output_file)
+
+        end_time = time.time()
+        execution_time = end_time - start_time
+        print("Execution time for telegram:", execution_time, "seconds")
+
+        await asyncio.sleep(10)
 
 if __name__ == "__main__":
     asyncio.run(main())
+

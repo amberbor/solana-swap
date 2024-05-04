@@ -1,30 +1,49 @@
 import asyncio
-from dataclasses import dataclass
+import time
+from datetime import datetime
+
 from solders.keypair import Keypair
 from solanatracker import SolanaTracker
 from dotenv import load_dotenv
+from src.database.transactions import Transactions
+from src.rugcheck.scan_coin import RugChecker
 import os
 
 load_dotenv()
-@dataclass(kw_only=True)
-class Trade:
-    ammountIn : float
-    ammountOut: float
-    minAmountOut: float
-    currentPrice: float
-    executionPrice: float
-    priceImpact: int
-    isPumpFun: int
-    platformFee: int
-    fee: float
-    baseCurrency: str
-    quoteCurrency: str
-    tokenBought:str
 
-    def __post_init__(self):
-        rate_response = asyncio.run(self.calculate_rate_coin())
+
+class Trade:
+    def __init__(self):
+        self.ammountIn = None
+        self.ammountOut = None
+        self.minAmountOut = None
+        self.currentPrice = None
+        self.executionPrice = None
+        self.priceImpact = None
+        self.isPumpFun = None
+        self.platformFee = None
+        self.fee = None
+        self.baseCurrency = None
+        self.quoteCurrency = None
+        self.tokenBought = None
+        self.db = Transactions()
+        self.rug_check = RugChecker()
+
+    async def calculate_rate_coin(self, coin_address, process=None, new_coin_id=None, transaction=None) -> dict:
+        keypair = Keypair.from_base58_string(
+            "3xmbhcrVadA6vy1vtAdnJP7PjH7WogJ42YXR55NK4YZvjaJ22ypR3Xabnj2AEMhB9dgLwauLochDW2h9gJw9ERWn")
+
+        solana_tracker = SolanaTracker(keypair, "https://rpc.solanatracker.io/public?advancedTx=true")
+
+        rate_response = await solana_tracker.get_rate(
+            os.getenv("SOLANA_WALLET_ADDRESS"),  # From Token
+            coin_address,  # To Token
+            float(os.getenv("AMOUNT_TO_BUY")),  # Amount to swap
+            float(os.getenv("SLIPPAGE_RATE")),  # Slippage
+        )
+
         self.ammountIn = rate_response['amountIn']
-        self.ammountOut = rate_response['ammountOut']
+        self.ammountOut = rate_response['amountOut']
         self.minAmountOut = rate_response['minAmountOut']
         self.currentPrice = rate_response['currentPrice']
         self.executionPrice = rate_response['executionPrice']
@@ -34,29 +53,31 @@ class Trade:
         self.fee = rate_response['fee']
         self.baseCurrency = rate_response['baseCurrency']['mint']
         self.quoteCurrency = rate_response['quoteCurrency']['mint']
-        # swap
-        swap_response = asyncio.run(self.buy_coin())
-        self.tokenBought = swap_response['rate']['quoteCurrency']['mint']
-        self.amountSolana = swap_response['rate']['amountIn']
-        self.amountTokenBought = swap_response['rate']['amountOut']
 
-    """
-        Get the data of one token
-    """
-    async def calculate_rate_coin(self) -> dict:
-        keypair = Keypair.from_base58_string(
-            "3xmbhcrVadA6vy1vtAdnJP7PjH7WogJ42YXR55NK4YZvjaJ22ypR3Xabnj2AEMhB9dgLwauLochDW2h9gJw9ERWn")
+        if process == "buy" and new_coin_id is not None:
+            self.db.add_new_record_transactions("transactions", rate_response, new_coin_id=new_coin_id)
 
-        solana_tracker = SolanaTracker(keypair, "https://rpc.solanatracker.io/public?advancedTx=true")
+        if process == "update" and new_coin_id is not None:
+            profit = self.profit_percentage(transaction['price_bought'])
+            if profit >= 200:
+                self.db.update_transaction_to_sold(transaction['id'])
+            elif profit == 200:
+                self.sell_no_profit(transaction)
 
-        rate_response = await solana_tracker.get_rate(
-            os.getenv("SOLANA_WALLET_ADDRESS"),  # From Token
-            "47p9s6G7mcAkELaq2kr2xLquLHgoJjEeHdcrf1xJkjnk",  # To Token
-            os.getenv("AMOUNT_TO_BUY"),  # Amount to swap
-            os.getenv("SLIPPAGE_RATE"),  # Slippage
-        )
+            self.db.update_transaction_by_id(new_coin_id, rate_response['amountOut'], profit)
 
         return rate_response
+
+    def sell_no_profit(self, transaction):
+        created_at = datetime.strptime(transaction['created_at'], "%Y-%m-%d %H:%M:%S.%f")
+        updated_at = datetime.strptime(transaction['updated_at'], "%Y-%m-%d %H:%M:%S.%f")
+        time_diff = updated_at - created_at
+
+        if time_diff.total_seconds() == 120:
+            self.db.update_transaction_to_sold(transaction['id'])
+
+    def profit_percentage(self, priceBought):
+        return ((self.ammountOut - priceBought) / priceBought) * 100
 
     async def buy_coin(self) -> dict:
         keypair = Keypair.from_base58_string(os.getenv("PAYER_PUBLIC_KEY"))
@@ -66,11 +87,9 @@ class Trade:
         swap_response = await solana_tracker.get_swap_instructions(
             os.getenv("SOLANA_WALLET_ADDRESS"),  # From Token
             "47p9s6G7mcAkELaq2kr2xLquLHgoJjEeHdcrf1xJkjnk",  # To Token
-            os.getenv("AMOUNT_TO_BUY"),  # Amount to swap
-            os.getenv("SLIPPAGE_SWAP"),  # Slippage
+            float(os.getenv("AMOUNT_TO_BUY")),  # Amount to swap
+            float(os.getenv("SLIPPAGE_SWAP")),  # Slippage
             str(keypair.pubkey()),  # Payer public key
-            0.00005,  # Priority fee (Recommended while network is congested)
-            True,  # Force legacy transaction for Jupiter
         )
 
         txid = await solana_tracker.perform_swap(swap_response)
@@ -85,6 +104,10 @@ class Trade:
 
         print("Transaction ID:", txid)
         print("Transaction URL:", f"https://explorer.solana.com/tx/{txid}")
+
+        self.tokenBought = swap_response['rate']['quoteCurrency']['mint']
+        self.amountSolana = swap_response['rate']['amountIn']
+        self.amountTokenBought = swap_response['rate']['amountOut']
 
         return swap_response
 
@@ -96,8 +119,8 @@ class Trade:
         swap_response = await solana_tracker.get_swap_instructions(
             os.getenv("SOLANA_WALLET_ADDRESS"),  # From Token
             "47p9s6G7mcAkELaq2kr2xLquLHgoJjEeHdcrf1xJkjnk",  # To Token
-            os.getenv("AMOUNT_TO_BUY"),  # Amount to swap
-            os.getenv("SLIPPAGE_SWAP"),  # Slippage
+            float(os.getenv("AMOUNT_TO_BUY")),  # Amount to swap
+            float(os.getenv("SLIPPAGE_SWAP")),  # Slippage
             str(keypair.pubkey()),  # Payer public key
             0.00005,  # Priority fee (Recommended while network is congested)
             True,  # Force legacy transaction for Jupiter
@@ -118,21 +141,48 @@ class Trade:
 
         return swap_response
 
-    """
-        Calculate the swap coin based on the trade data.
-    """
-    def calculate_swap_coin(self) -> str:
-        return self.baseCurrency['mint'] if self.amountIn < self.amountOut else self.quoteCurrency['mint']
+    async def calculate_swap_coin(self, message) -> bool:
+        try:
+            dev_percentage = float(message.dev_percentage)
+        except ValueError:
+            if message.dev_percentage.strip() == '0%':
+                dev_percentage = 0.0
+            else:
+                raise ValueError("Invalid dev_percentage: {}".format(message.dev_percentage))
+        capital_coin = float(message.cap)
+        rug_holders = await self.rug_check_holders(message.mint_address)
 
-    """
-        Calculate the total amount out after deducting fees.
-    """
-    def calculate_total_amount_out_after_fees(self) -> float:
-        total_fee = self.platformFeeUI + self.fee
-        return self.amountOut - total_fee
+        if 1 <= dev_percentage <= 5 and 3000 <= capital_coin <= 5000 and len(rug_holders) <= 2:
+            return True
+        return False
 
-    """
-        Calculate the percentage difference between the current price and the execution price.
-    """
-    def calculate_percentage_difference(self) -> float:
-        return abs(self.currentPrice - self.executionPrice) / self.currentPrice * 100
+    async def rug_check_holders(self, mint_address):
+        return await self.rug_check.check_rug(mint_address)
+
+    async def calculate_rates_for_coin_addresses(self, transactions) -> list:
+        for transaction in transactions:
+            print(transaction)
+        tasks = [self.calculate_rate_coin(transaction['mint_address'], process="update", new_coin_id=transaction['id'],
+                                          transaction=transaction) for transaction in transactions]
+        result_tuples = await asyncio.gather(*tasks)
+        return list(result_tuples)
+
+
+async def main():
+    while True:
+        start_time = time.time()
+
+        trade = Trade()
+        db = Transactions()
+        transactions = await db.get_bought_coins()
+        await trade.calculate_rates_for_coin_addresses(transactions)
+
+        end_time = time.time()
+        execution_time = end_time - start_time
+        print("Execution time for trade:", execution_time, "seconds")
+
+        await asyncio.sleep(10)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
