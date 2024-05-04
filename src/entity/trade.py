@@ -61,7 +61,7 @@ class Trade:
             profit = self.profit_percentage(transaction['price_bought'])
             if profit >= 200:
                 self.db.update_transaction_to_sold(transaction['id'])
-            elif profit == 200:
+            elif profit == 0:
                 self.sell_no_profit(transaction)
 
             self.db.update_transaction_by_id(new_coin_id, rate_response['amountOut'], profit)
@@ -69,8 +69,8 @@ class Trade:
         return rate_response
 
     def sell_no_profit(self, transaction):
-        created_at = datetime.strptime(transaction['created_at'], "%Y-%m-%d %H:%M:%S.%f")
-        updated_at = datetime.strptime(transaction['updated_at'], "%Y-%m-%d %H:%M:%S.%f")
+        created_at = transaction['created_at']
+        updated_at = transaction['updated_at']
         time_diff = updated_at - created_at
 
         if time_diff.total_seconds() >= 120:
