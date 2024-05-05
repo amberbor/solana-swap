@@ -29,6 +29,7 @@ class Trade:
         self.db = Transactions()
         self.rug_check = RugChecker()
 
+
     async def calculate_rate_coin(self, coin_address, process=None, new_coin_id=None, transaction=None) -> dict:
         keypair = Keypair.from_base58_string(
             "3xmbhcrVadA6vy1vtAdnJP7PjH7WogJ42YXR55NK4YZvjaJ22ypR3Xabnj2AEMhB9dgLwauLochDW2h9gJw9ERWn")
@@ -156,14 +157,8 @@ class Trade:
         return swap_response
 
     async def calculate_swap_coin(self, message) -> bool:
-        try:
-            dev_percentage = float(message.dev_percentage)
-        except ValueError:
-            if message.dev_percentage.strip() == '0%':
-                dev_percentage = 0.0
-            else:
-                raise ValueError("Invalid dev_percentage: {}".format(message.dev_percentage))
-        capital_coin = float(message.cap)
+        dev_percentage = message.dev_percentage
+        capital_coin = message.cap
         rug_holders = await self.rug_check_holders(message.mint_address)
 
         if 1 <= dev_percentage <= 5 and 3000 <= capital_coin <= 5000 and len(rug_holders) <= 2:

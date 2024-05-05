@@ -53,3 +53,4 @@ webdriver-manager==4.0.1
 websockets==11.0.3
 wsproto==1.2.0
 zipp==3.18.1
+django==5.0.4

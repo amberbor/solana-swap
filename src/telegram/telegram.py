@@ -1,13 +1,12 @@
 import asyncio
-import json
 import os
 import re
 import time
-
+from src.configs import HASH_TELEGRAM, API_TELEGRAM, PHONE_NUMBER_TELEGRAM
 from dotenv import load_dotenv
 from telethon.sync import TelegramClient
 from src.database.transactions import Transactions
-from src.entity.trade import Trade
+from src.app.entity import Trade
 
 load_dotenv()
 
@@ -91,7 +90,7 @@ class TelegramMessageFetcher:
         return Message(**kwargs)
 
 async def main():
-    fetcher = TelegramMessageFetcher(os.getenv("API_TELEGRAM"), os.getenv("HASH_TELEGRAM"), os.getenv("PHONE_NUMBER"))
+    fetcher = TelegramMessageFetcher(API_TELEGRAM, HASH_TELEGRAM, PHONE_NUMBER_TELEGRAM)
 
     chat_id = int(os.getenv("CHAT_ID"))
     output_file = "telegram.json"
