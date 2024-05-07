@@ -13,7 +13,7 @@ class Telegram:
         self.api_id = TELEGRAM_API
         self.api_hash = TELEGRAM_HASH
         self.phone_number = TELEGRAM_PHONE_NUMBER
-        self.client = TelegramClient('session_' + self.phone_number, self.api_id, self.api_hash)
+        self.client = TelegramClient('session_' + self.phone_number, api_id=self.api_id, api_hash=self.api_hash)
 
     async def connect(self):
         try:
@@ -23,8 +23,10 @@ class Telegram:
             await self.re_login()
 
     async def read_messages(self, last_message_id=0):
+        # b = await self.client.start()
         await self.connect()
-        async for message in self.client.iter_messages(self.chat_id):
+        a = await self.client.is_user_authorized()
+        async for message in self.client.iter_messages(int(self.chat_id)):
             if message.id > last_message_id:
                 yield Message(message)
 
