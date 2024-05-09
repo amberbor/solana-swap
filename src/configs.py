@@ -21,8 +21,9 @@ SOLANA_WALLET_ADDRESS = os.getenv("SOLANA_WALLET_ADDRESS")
 AMOUNT_TO_BUY = float(os.getenv("AMOUNT_TO_BUY"))
 SLIPPAGE_RATE = float(os.getenv("SLIPPAGE_RATE"))
 KEYPAIR = os.getenv("KEYPAIR")
-RPC = os.getenv("KEYPAIR")
+RPC = os.getenv("RPC")
 
 RUG_CHECK_URL = os.getenv("RUG_CHECK_URL")
+PAYER_PUBLIC_KEY = os.getenv("PAYER_PUBLIC_KEY")
 
 TEST = os.getenv("TEST", False)

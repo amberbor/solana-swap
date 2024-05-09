@@ -5,13 +5,18 @@ from solders.keypair import Keypair
 from solders.transaction import Transaction
 from solders.signature import Signature
 from solana.rpc.api import Client
+from src.configs import RPC, KEYPAIR
 
 class SolanaTracker:
-    def __init__(self, keypair: Keypair, rpc: str, debug: bool = False):
+    def __init__(self, debug: bool = False):
         self.base_url = "https://api.solanatracker.io"
-        self.connection = Client(rpc)
-        self.keypair = keypair
+        self.connection = Client(RPC)
+        self.keypair = KEYPAIR
         self.debug = debug
+
+    def reconnect(self):
+        self.connection = Client(RPC)
+
 
     async def get_rate(self, from_token: str, to_token: str, amount: float, slippage: float) -> dict:
         params = {

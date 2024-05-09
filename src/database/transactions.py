@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from .connections import DatabaseManager
+from src.database.connections import BaseDatabaseManager as DatabaseManager
 
 class Transactions:
     def __init__(self):

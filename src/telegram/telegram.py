@@ -8,6 +8,7 @@ from telethon.sync import TelegramClient
 from src.database.transactions import Transactions
 from src.app.entity import Trade
 
+
 load_dotenv()
 
 class Message:

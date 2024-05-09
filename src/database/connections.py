@@ -1,57 +1,36 @@
-import os
-from psycopg2 import pool
-from dotenv import load_dotenv
-from src.configs import (
-    POSTGRES_DB_NAME,
-    POSTGRES_DB_HOST,
-    POSTGRES_DB_USER,
-    POSTGRES_DB_PASSWORD,
-    POSTGRES_DB_PORT
-)
-load_dotenv()
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker, scoped_session
+from src.database.database_configuration import create_uri
 
-class DatabaseManager:
+class BaseDatabaseManager:
     def __init__(self):
-        self.host = POSTGRES_DB_HOST
-        self.dbname = POSTGRES_DB_NAME
-        self.dbuser = POSTGRES_DB_USER
-        self.dbpassword = POSTGRES_DB_PASSWORD
-        self.port = POSTGRES_DB_PORT
-        self.uri = None
-        self.db_params = {
-            'dbname': os.getenv('DB_NAME'),
-            'user': os.getenv('DB_USER'),
-            'password': os.getenv('DB_PASS'),
-            'host': os.getenv('DB_HOST'),
-            'port': os.getenv('DB_PORT')
-        }
-        self.connection_pool = self.create_pool()
+        self.uri = create_uri()
+        self.engine = create_engine(self.uri)
+        self.session_factory = sessionmaker(bind=self.engine)
+        self.Session = scoped_session(self.session_factory)
+        self.session = None
 
-    def create_uri(self):
-        if self.uri:
-            return self.uri
-        self.uri = f"postgresql://{self.dbuser}:{self.dbuser}@{self.host}:{self.port}/{self.dbname}?sslmode=prefer"
+    def __enter__(self):
+        self.session = self.Session()
+        return self
 
-    def create_pool(self):
-        return pool.SimpleConnectionPool(1, 10, **self.db_params)
-
-    def get_connection(self):
-        return self.connection_pool.getconn()
-
-    def close_connection(self, conn):
-        conn.cursor().close()
-        self.connection_pool.putconn(conn)
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.session.close()
 
 
-# connection_pool = create_pool()
-#
-# conn = get_connection(connection_pool)
-#
-# try:
-#     cur = conn.cursor()
-#     cur.execute("SELECT * FROM my_table")
-#     rows = cur.fetchall()
-#     for row in rows:
-#         print(row)
-# finally:
-#     close_connection(connection_pool, conn, cur)
+    def insert_record(self, new_record):
+        self.session.add(new_record)
+        try:
+            self.session.commit()
+        except Exception as e:
+            self.session.rollbac()
+            raise e
+
+    def get_last_record(self, entity, order_by_field , **filters):
+        record = self.session.query(entity).filter_by(**filters).order_by(getattr(entity, order_by_field).desc())
+        return record
+
+    def get_records(self, entity, order_by_field ,**filters):
+        records = self.session.query(entity).filter_by(**filters).order_by(getattr(entity, order_by_field))
+        return records
+

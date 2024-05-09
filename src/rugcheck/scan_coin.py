@@ -7,7 +7,6 @@ from src.configs import RUG_CHECK_URL
 
 class RugChecker:
     def __init__(self):
-        self.mint_address = None
         self.url = f"{RUG_CHECK_URL}/"
 
     async def fetch_page_source(self, url_path):
@@ -27,9 +26,7 @@ class RugChecker:
         return await launch(headless=True)
 
     async def check_rug(self, mint_address):
-        self.mint_address = mint_address
         url_path = self.url + mint_address
-
         retry_count = 3
         while retry_count > 0:
             page_source = await self.fetch_page_source(url_path)
