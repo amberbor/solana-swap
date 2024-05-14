@@ -4,7 +4,7 @@ from bs4 import BeautifulSoup
 from pyppeteer import launch
 from src.configs import RUG_CHECK_URL
 
-class RugChecker:
+class RugCheck:
     '''Scrape info for coins'''
     def __init__(self):
         self.url = f"{RUG_CHECK_URL}/"

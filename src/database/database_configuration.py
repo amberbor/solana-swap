@@ -5,7 +5,6 @@ from src.configs import (
     POSTGRES_DB_USER,
     POSTGRES_DB_PASSWORD,
     POSTGRES_DB_PORT,
-TEST
 )
 from sqlalchemy.ext.declarative import declarative_base
 

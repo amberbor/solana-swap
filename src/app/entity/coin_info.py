@@ -1,18 +1,21 @@
 import re
+from src.app.services.database import DatabaseManager
+from src.database.orm import CoinInfo
 
 
-class Message:
+class CoinInfoEntity:
     attribute_map = {
         "Mint": "mint_address",
         "Name": "name",
         "Symbol": "symbol",
         "Creator": "creator",
-        "Cap": "cap",
+        "Market Cap": "cap",
         "Dev": "dev_percentage",
         "Bought": "bought",
     }
 
     def __init__(self, message):
+        self._message = message
         self.message_id = message.id
         self.sent_at = message.date
         self.mint_address: str = None
@@ -21,7 +24,6 @@ class Message:
         self.creator: str = None
         self.cap: float = None
         self.dev_percentage: float = None
-        self.bought = None
 
         self.parse_message(message.text)
 
@@ -34,7 +36,7 @@ class Message:
                 key = key.strip()
                 value = value.strip().strip("`")
                 if key in self.attribute_map:
-                    if key == "Cap":
+                    if "Cap" in key:
                         value = self.convert_to_float(
                             value.replace("$", "").replace(",", "")
                         )

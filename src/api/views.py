@@ -1,10 +1,11 @@
 import asyncio
-from src.app.use_case.job import job
+from src.app.use_case.buy_job import job
 from rest_framework.decorators import api_view
 from django.http import JsonResponse
 
+
 # Create your views here.
-@api_view(['GET'])
+@api_view(["GET"])
 def run(request):
     a = asyncio.run(job())
-    return JsonResponse({'message' : 'Successful'})
+    return JsonResponse({"message": "Successful"})
