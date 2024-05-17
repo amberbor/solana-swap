@@ -18,6 +18,7 @@ services:
       - ./src:/src
     networks:
       meme_coin:
+    restart: always
 
 #  celery_worker:
 #    build:
