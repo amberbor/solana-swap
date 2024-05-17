@@ -1,7 +1,7 @@
 import logging
 
 # Create logger
-logger = logging.getLogger("insta")
+logger = logging.getLogger("sol")
 logger.setLevel(logging.INFO)
 
 # Create console handler and set level to info

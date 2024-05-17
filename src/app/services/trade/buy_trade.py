@@ -1,10 +1,7 @@
 from .trade import Trade
-from src.app.entity import PortofolioEntity
 from src.app.entity import TradePairEntity
-import logging
 from src.configs import RUN_ENV
-
-logger = logging.getLogger(__name__)
+from src.custom_logger import logger
 
 
 class BuyTrade(Trade):
@@ -28,6 +25,7 @@ class BuyTrade(Trade):
         super().__init__(solana_wallet_address)
 
     async def buy_coin(self, token_mint_address) -> TradePairEntity:
+
         swap_response = await self.solana_tracker.get_swap_instructions(
             from_token=self.solana_wallet_address,  # From Token
             to_token=token_mint_address,  # To Token
@@ -39,28 +37,18 @@ class BuyTrade(Trade):
         txid = swap_response["txn"]
         if RUN_ENV == "PROD":
             txid = await self.solana_tracker.perform_swap(swap_response)
-        print("Token bought successfully")
+        logger.info("Token bought successfully")
 
         if not txid:
             raise Exception("Swap failed")
 
         rate_response = swap_response["rate"]
-        print("Transaction ID:", txid)
-        logger.info(
-            f" COIN BOUGHT: \n"
-            f"Amount: {rate_response['amountIn']}\n"
-            f"Received Amount: {rate_response['amountOut']}\n"
-            f"Price: {rate_response['executionPrice']}\n"
-            f"Fee: {rate_response['fee']}\n"
-            f"Platform Fee: {rate_response['platformFee']}\n"
-        )
+
         response = TradePairEntity(
             txid=txid,
             txid_url=f"https://explorer.solana.com/tx/{txid}",
-            base_coin_amount=rate_response[
-                "amountIn"
-            ],  #  Amount of Source Token (Solana)
-            coin_amount=rate_response["amountOut"],  #  Amount Destination received
+            amount_in=rate_response["amountIn"],  #  Amount of Source Token (Solana)
+            amount_out=rate_response["amountOut"],  #  Amount Destination received
             min_amount_out=rate_response[
                 "minAmountOut"
             ],  # Min Amount  of destination token willing to receive

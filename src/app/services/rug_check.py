@@ -1,42 +1,37 @@
 import asyncio
 import re
-from bs4 import BeautifulSoup
-from pyppeteer import launch
-from src.configs import RUG_CHECK_URL
+import requests
+import certifi
+from src.app.entity.rug_check import RugCheckEntity
+
 
 class RugCheck:
-    '''Scrape info for coins'''
-    def __init__(self):
-        self.url = f"{RUG_CHECK_URL}/"
+    """Scrape info for coins"""
 
-    async def fetch_page_source(self, url_path):
-        try:
-            browser = await self.launch_browser()
-            page = await browser.newPage()
-            await page.goto(url_path, timeout=30000)
-            await page.waitForSelector('body')
-            content = await page.content()
-            await browser.close()
-            return content
-        except Exception as e:
-            print(f"Error fetching page source: {e}")
-            return None
+    headers = {
+        "Connection": "keep-alive",
+        "sec-ch-ua": '"Chromium";v="124", "Google Chrome";v="124", "Not-A.Brand";v="99"',
+        "X-Wallet-Address": "null",
+        "Content-Type": "application/json",
+        "sec-ch-ua-mobile": "?0",
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+        "sec-ch-ua-platform": '"macOS"',
+        "Accept": "/",
+        "Origin": "https://rugcheck.xyz",
+        "Sec-Fetch-Site": "same-site",
+        "Sec-Fetch-Mode": "cors",
+        "Sec-Fetch-Dest": "empty",
+        "Referer": "https://rugcheck.xyz/",
+        "Accept-Language": "en-GB,en-US;q=0.9,en;q=0.8",
+    }
+    ca_bundle_path = certifi.where()
+    url = "https://api.rugcheck.xyz/v1/tokens"
 
-    async def launch_browser(self):
-        return await launch(headless=True)
+    def rug_check(self, mint_address):
 
-    async def check_rug(self, mint_address):
-        url_path = self.url + mint_address
-        retry_count = 3
-        while retry_count > 0:
-            page_source = await self.fetch_page_source(url_path)
-            if page_source:
-                soup = BeautifulSoup(page_source, 'html.parser')
-                percentage_elements = soup.find_all(string=re.compile(r'\b\d+\.\d+%'))
-                percentage_list = percentage_elements[3:]
-                return percentage_list
-            else:
-                retry_count -= 1
-                await asyncio.sleep(5)
-        print("Failed to fetch page source after retries.")
-        return None
+        response = requests.get(
+            url=f"{self.url}/{mint_address}/report",
+            headers=self.headers,
+            verify=self.ca_bundle_path,
+        )
+        return RugCheckEntity(response)

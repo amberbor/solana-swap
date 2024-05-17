@@ -4,6 +4,7 @@ from src.configs import RUN_ENV
 import asyncio
 from src.app.entity import TradePairEntity
 from datetime import datetime, timedelta, timezone
+from src.app.helpers import parse_tradepair_response
 
 logger = logging.getLogger(__name__)
 
@@ -16,7 +17,6 @@ class SellTrade(Trade):
         super().__init__(solana_wallet_address)
 
     async def current_swap_rate(self, wallet_coin) -> TradePairEntity:
-        self.profit = None
 
         swap_response = await self.solana_tracker.get_swap_instructions(
             from_token=wallet_coin.coin.mint_address,  # From Token Try to change
@@ -24,28 +24,28 @@ class SellTrade(Trade):
             from_amount=wallet_coin.amount,  # Amount to swap
             slippage=self.sell_slippage_rate,  # Slippage
             payer=self._public_payer_key,
-            priority_fee=0.00005,  # Priority fee (Recommended while network is congested)
+            priority_fee=0,  # Priority fee (Recommended while network is congested)
             force_legacy=True,  # Force legacy transaction for Jupiter
         )
-        return swap_response
+        return parse_tradepair_response(swap_response["rate"], swap_response["txn"])
 
-    def calculate_profit(self, wallet_coin, swap_response, configs):
+    def calculate_profit(self, wallet_coin, current_swap, configs):
         self.profit = 0
         nr_holders = wallet_coin.trade_pair.holders
         now = datetime.now(timezone.utc)
 
-        rate_response = swap_response["rate"]
-
-        current_price = rate_response["executionPrice"]
-
-        price_bought = wallet_coin.bought_at
+        # current_price = rate_response["executionPrice"]
+        current_amount = current_swap.amount_out
+        amount_paid = wallet_coin.trade_pair.amount_in
 
         # Calculate the minimum price that would yield 2x profit
-        double_price = 2 * price_bought
+        double_price = 2 * amount_paid
 
         # Check if the current price is at least twice the price bought
-        if current_price >= double_price:
+        if current_amount >= double_price:
             return True
+
+        self.profit = current_amount - amount_paid
 
         if 2 <= nr_holders <= 3:
             if wallet_coin.created_at < now - timedelta(
@@ -59,65 +59,33 @@ class SellTrade(Trade):
             ):
                 return True
 
-        if 4 <= nr_holders <= 5:
+        if nr_holders >= 4:
             if wallet_coin.created_at < now - timedelta(
                 seconds=configs.third_wait_seconds
             ):
                 return True
 
+        if nr_holders == 1:
+            return True
+
         return False
 
-    async def sell_coin(self, swap_response):
-        rate_response = swap_response["rate"]
+    async def sell_coin(self, current_swap):
 
-        txid = swap_response["txn"]
+        txid = current_swap.txid
         if RUN_ENV == "PROD":
-            txid = await self.solana_tracker.perform_swap(swap_response)
+            txid = await self.solana_tracker.perform_swap(current_swap)
 
         if not txid:
             raise Exception("Swap failed")
 
-        response = TradePairEntity(
-            txid=txid,
-            txid_url=f"https://explorer.solana.com/tx/{txid}",
-            base_coin_amount=rate_response[
-                "amountIn"
-            ],  #  Amount of Source Token (Solana)
-            coin_amount=rate_response["amountOut"],  #  Amount Destination received
-            min_amount_out=rate_response[
-                "minAmountOut"
-            ],  # Min Amount  of destination token willing to receive
-            current_price=rate_response[
-                "currentPrice"
-            ],  # Current market price for the Token Pair
-            execution_price=rate_response[
-                "executionPrice"
-            ],  # The actual price the trade will be executed
-            price_impact=rate_response[
-                "priceImpact"
-            ],  # % of the Diff of current_price - execution price (Lack of Liquidity)
-            fee=rate_response["fee"],  # Trade fee charged for transaction
-            platform_fee=rate_response[
-                "platformFee"
-            ],  # Trade fee charged for transaction
-            platform_fee_ui=rate_response[
-                "platformFeeUI"
-            ],  # Trade fee charged for transaction
-            base_currency=rate_response["baseCurrency"][
-                "mint"
-            ],  # Fee charged by platform for the transaction
-            quote_currency=rate_response["quoteCurrency"][
-                "mint"
-            ],  # Platform fee in SOL
-            is_pump_fun=rate_response["isPumpFun"],  # coin Amount
-        )
+        response = current_swap
 
         return response
 
     async def get_current_coin_price(
         self, token_mint_address: str, amount: float
     ) -> TradePairEntity:
-        self.check_connection()
 
         retry_count = 3
         rate_response = None
@@ -140,11 +108,10 @@ class SellTrade(Trade):
                     print("No more retries left. Exiting.")
 
         if rate_response:
+            response = parse_tradepair_response(rate_response)
             response = TradePairEntity(
-                base_coin_amount=rate_response[
-                    "amountIn"
-                ],  #  Amount of Source Token (Solana)
-                coin_amount=rate_response["amountOut"],  #  Amount Destination received
+                amount_in=rate_response["amountIn"],  #  Amount of Source Token (Solana)
+                amount_out=rate_response["amountOut"],  #  Amount Destination received
                 min_amount_out=rate_response[
                     "minAmountOut"
                 ],  # Min Amount  of destination token willing to receive

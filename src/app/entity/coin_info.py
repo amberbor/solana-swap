@@ -18,12 +18,12 @@ class CoinInfoEntity:
         self._message = message
         self.message_id = message.id
         self.sent_at = message.date
-        self.mint_address: str = None
-        self.name: str = None
-        self.symbol: str = None
-        self.creator: str = None
-        self.cap: float = None
-        self.dev_percentage: float = None
+        self.mint_address: str
+        self.name: str
+        self.symbol: str
+        self.creator: str
+        self.cap: float
+        self.dev_percentage: float = 30
 
         self.parse_message(message.text)
 
@@ -62,3 +62,14 @@ class CoinInfoEntity:
             "cap": self.cap,
             "dev_percentage": self.dev_percentage,
         }
+
+    def db_entity(self):
+        return CoinInfo(
+            message_id=self.message_id,
+            mint_address=self.mint_address,
+            name=self.name,
+            symbol=self.symbol,
+            creator=self.creator,
+            cap=self.cap,
+            dev_percentage=self.dev_percentage,
+        )

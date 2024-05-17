@@ -1,16 +1,10 @@
 import asyncio
-import time
 
 from solders.keypair import Keypair
 from solanatracker import SolanaTracker
-from src.database.transactions import Transactions
-from src.app.entity import TradePairEntity
 from src.rugcheck.scan_coin import RugChecker
 from src.configs import SOLANA_TRACKER_URL, KEYPAIR, RPC, PAYER_PUBLIC_KEY
-
-import logging
-
-logger = logging.getLogger(__name__)
+from src.custom_logger import logger
 
 
 class Trade:
@@ -36,18 +30,24 @@ class Trade:
         if not self.solana_tracker.connection.is_connected:
             self.solana_tracker.reconnect()
 
-    async def calculate_swap_coin(self, coin_info, nr_holders: int) -> bool:
-        """Calculates & Decides based on coin_ information / Configs if to buy or not this coin"""
+    async def calculate_swap_coin(self, coin, holders: int) -> bool:
+        """
+        Calculates & Decides based on coin_ information / Configs if to buy or not this coin
+        1. Calculate based on dev percentage
+        2. Calculate based on Market Cap
+        3. Calculate based on number of coin holders at this time
+        """
 
         try:
+            coin_dev_percentage = coin.dev_percentage
             if (
-                self.dev_percentage_min
-                <= coin_info.dev_percentage
+                coin_dev_percentage is not None  # If dev % not determined pass
+                and self.dev_percentage_min
+                <= coin_dev_percentage
                 <= self.dev_percentage_max
             ):
-                if 3000 <= coin_info.cap <= 5000:
-                    if nr_holders <= 2:
-                        logger.info("Coin PASSED checks to trade...")
+                if 3000 <= coin.cap <= 5000:
+                    if holders <= 2:
                         return True
             return False
         except Exception as e:
@@ -66,23 +66,3 @@ class Trade:
         ]
         result_tuples = await asyncio.gather(*tasks)
         return list(result_tuples)
-
-
-async def main():
-    while True:
-        start_time = time.time()
-
-        trade = Trade()
-        db = Transactions()
-        transactions = await db.get_bought_coins()
-        await trade.calculate_rates_for_coin_addresses(transactions)
-
-        end_time = time.time()
-        execution_time = end_time - start_time
-        print("Execution time for trade:", execution_time, "seconds")
-
-        await asyncio.sleep(10)
-
-
-if __name__ == "__maixn__":
-    asyncio.run(main())

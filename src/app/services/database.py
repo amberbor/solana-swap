@@ -1,5 +1,6 @@
 from src.database.connections import BaseDatabaseManager
 from sqlalchemy.exc import IntegrityError
+from src.custom_logger import logger
 
 
 class DatabaseManager(BaseDatabaseManager):
@@ -8,13 +9,14 @@ class DatabaseManager(BaseDatabaseManager):
             self.session.add(new_record)
             try:
                 self.session.commit()
+                self.session.refresh(new_record)
                 return new_record
             except IntegrityError as e:
-                return None
+                logger.error(e)
 
             except Exception as e:
                 self.session.rollback()
-                raise e
+                logger.error(e)
 
     def get_last_record(self, entity, order_by_field="created_at", **filters):
         with self as db:

@@ -4,10 +4,6 @@ from src.app.services.telegram import Telegram
 from src.app.services.database import DatabaseManager
 from src.app.services.trade import Trade
 from src.api.models import Portofolio
-from .helpers import get_configurations
-
-
-
 
 
 async def update_portofolio():
@@ -18,4 +14,3 @@ async def update_portofolio():
     portofolio = Portofolio.objects.all()
     for item in portofolio:
         trade.calculate_profit()
-

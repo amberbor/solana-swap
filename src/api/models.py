@@ -14,7 +14,7 @@ class CoinInfo(models.Model):
     symbol = models.CharField(max_length=250)
     creator = models.CharField(max_length=250, null=True)
     cap = models.FloatField(max_length=250)
-    dev_percentage = models.FloatField(default=0)
+    dev_percentage = models.FloatField(null=True, blank=True)
     created_at = models.DateTimeField(default=default_datetime)
     updated_at = models.DateTimeField(default=default_datetime)
 
@@ -23,33 +23,37 @@ class CoinInfo(models.Model):
 
 
 class TradePair(models.Model):
-    coin = models.ForeignKey(CoinInfo, on_delete=models.PROTECT)
-    base_coin_amount = models.FloatField()
-    coin_amount = models.FloatField()
+    base_currency = models.CharField(max_length=250)
+    quote_currency = models.CharField(max_length=250)
+    amount_in = models.FloatField()
+    amount_out = models.FloatField()
     min_amount_out = models.FloatField(null=True, blank=True)
+
     current_price = models.FloatField(null=True, blank=True)
     execution_price = models.FloatField(null=True, blank=True)
     price_impact = models.FloatField(null=True, blank=True)
-    is_pump_fun = models.BooleanField(default=True)
-    platform_fee = models.FloatField()
-    base_currency = models.CharField(max_length=250)
-    quote_currency = models.CharField(max_length=250)
-    holders = models.IntegerField(null=False, default=2)
 
+    fee = models.FloatField(null=True, blank=True)
+    platform_fee = models.FloatField(null=True, blank=True)
+    platform_fee_ui = models.FloatField(null=True, blank=True)
+
+    holders = models.IntegerField(null=True, blank=True)
     traded = models.BooleanField(default=False)
-    txid = models.CharField(max_length=255, null=True)
-    txid_url = models.CharField(max_length=500, null=True)
+    is_pump_fun = models.BooleanField(default=True)
+
+    txid = models.CharField(max_length=2500, null=True)
+    txid_url = models.CharField(max_length=2500, null=True)
+
     created_at = models.DateTimeField(default=default_datetime)
     updated_at = models.DateTimeField(default=default_datetime)
+
+    coin = models.ForeignKey(CoinInfo, on_delete=models.PROTECT)
 
     class Meta:
         db_table = "trade_pair"
 
 
 class Portofolio(models.Model):
-
-    trade_pair = models.ForeignKey(TradePair, on_delete=models.CASCADE)
-    coin = models.ForeignKey(CoinInfo, on_delete=models.CASCADE, default=0)
     amount = models.FloatField(null=True)
     bought_at = models.FloatField(null=True)
     sold_at = models.FloatField(null=True)
@@ -57,6 +61,9 @@ class Portofolio(models.Model):
     in_hold = models.BooleanField(default=False)
     created_at = models.DateTimeField(default=default_datetime)
     updated_at = models.DateTimeField(default=default_datetime)
+
+    trade_pair = models.ForeignKey(TradePair, on_delete=models.CASCADE)
+    coin = models.ForeignKey(CoinInfo, on_delete=models.CASCADE, default=0)
 
     class Meta:
         db_table = "portfolio"

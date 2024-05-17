@@ -7,6 +7,7 @@ from sqlalchemy import (
     Boolean,
     ForeignKey,
     DateTime,
+    Text,
 )
 from sqlalchemy.orm import relationship, sessionmaker
 from datetime import datetime
@@ -26,7 +27,7 @@ class CoinInfo(Base):
     symbol = Column(String(250))
     creator = Column(String(250), nullable=True)
     cap = Column(Float)
-    dev_percentage = Column(Float, default=0)
+    dev_percentage = Column(Float, nullable=True)
     created_at = Column(DateTime, default=default_datetime)
     updated_at = Column(DateTime, default=default_datetime)
 
@@ -34,24 +35,29 @@ class CoinInfo(Base):
 class TradePair(Base):
     __tablename__ = "trade_pair"
     id = Column(Integer, primary_key=True, autoincrement=True)
-    base_coin_amount = Column(Float)
-    coin_amount = Column(Float)
+    base_currency = Column(String(300))
+    quote_currency = Column(String(300))
+    amount_in = Column(Float)
+    amount_out = Column(Float)
     min_amount_out = Column(Float, nullable=True)
+
     current_price = Column(Float, nullable=True)
     execution_price = Column(Float, nullable=True)
     price_impact = Column(Float, nullable=True)
-    is_pump_fun = Column(Boolean, default=True)
+
+    fee = Column(Float)
     platform_fee = Column(Float)
-    base_currency = Column(String(300))
-    quote_currency = Column(String(300))
+    platform_fee_ui = Column(Float)
+
     holders = Column(Integer(), nullable=True, default=2)
+    traded = Column(Boolean, default=False)
+    is_pump_fun = Column(Boolean, default=True)
+
+    txid = Column(Text(2500), nullable=False)
+    txid_url = Column(Text(2500))
+
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow)
-
-    traded = Column(Boolean, default=False)
-    txid = Column(String(250), nullable=False)
-    txid_url = Column(String(700))
-
     coin_id = Column(Integer, ForeignKey("coin_info.id"), nullable=False)
     coin = relationship("CoinInfo", foreign_keys=[coin_id])
 
@@ -59,14 +65,13 @@ class TradePair(Base):
 class Portfolio(Base):
     __tablename__ = "portfolio"
     id = Column(Integer, primary_key=True, autoincrement=True)
-
     amount = Column(Float)
     bought_at = Column(Float)
+    sold_at = Column(Float, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow)
     in_hold = Column(Boolean, default=False)
-    sold_at = Column(Float)
-    profit = Column(Float)
+    profit = Column(Float, nullable=True)
 
     trade_pair_id = Column(Integer, ForeignKey("trade_pair.id"), nullable=True)
     trade_pair = relationship("TradePair", foreign_keys=[trade_pair_id], lazy="joined")
