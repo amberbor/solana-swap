@@ -1,4 +1,11 @@
 from src.custom_logger import logger
+import logging
+
+logger_2 = logging.getLogger(__name__)
+file_handler = logging.FileHandler("app.log", mode="w")
+console_handler = logging.StreamHandler()
+logger_2.addHandler(file_handler)
+logger_2.addHandler(console_handler)
 
 
 class RugCheckEntity:
@@ -22,7 +29,7 @@ class RugCheckEntity:
                 elif level == "warn":
                     self.risk_warn == True
             self.risk_score = response.get("score")
-
+            logger_2.info(f"Rug Check Risks: {self.risks}")
             self.pass_checks = True
             if self.nr_holders > 3 or self.risk_danger or self.risk_warn:
                 self.pass_checks = False

@@ -76,7 +76,8 @@ class Configurations(models.Model):
     dev_percentage_min = models.FloatField(default=0)
     dev_percentage_max = models.FloatField(null=False, blank=False)
     current_holders = models.IntegerField(default=2)
-    capital_coin = models.FloatField(null=False, blank=False, default=5000)
+    market_cap_min = models.FloatField(null=False, blank=False, default=4750)
+    market_cap_max = models.FloatField(null=False, blank=False, default=10000)
     amount_to_buy = models.FloatField(null=False, blank=False, default=0.05)
     buy_slippage_rate = models.FloatField(null=False, blank=False, default=10)
     sell_slippage_rate = models.FloatField(null=False, blank=False, default=10)
@@ -87,5 +88,13 @@ class Configurations(models.Model):
     second_wait_seconds = models.IntegerField(null=False, default=30)
     third_wait_seconds = models.IntegerField(null=False, default=15)
 
+    priority_fee_buy = models.IntegerField(null=False, default=0)
+    priority_fee_sell = models.IntegerField(null=False, default=0)
+
     class Meta:
         db_table = "configurations"
+
+
+# class AuthTokens(models.Model):
+#
+#     token = models.CharField(max_length=700)

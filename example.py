@@ -1,5 +1,5 @@
 from solders.keypair import Keypair
-from solanatracker import SolanaTracker
+from src.app.services.solanatracker import SolanaTracker
 
 # async def swap():
 #     keypair = Keypair.from_base58_string("3xmbhcrVadA6vy1vtAdnJP7PjH7WogJ42YXR55NK4YZvjaJ22ypR3Xabnj2AEMhB9dgLwauLochDW2h9gJw9ERWn")
@@ -26,11 +26,15 @@ from solanatracker import SolanaTracker
 #     print("Transaction ID:", txid)
 #     print("Transaction URL:", f"https://explorer.solana.com/tx/{txid}")
 
+
 async def rate():
     keypair = Keypair.from_base58_string(
-        "3xmbhcrVadA6vy1vtAdnJP7PjH7WogJ42YXR55NK4YZvjaJ22ypR3Xabnj2AEMhB9dgLwauLochDW2h9gJw9ERWn")
+        "3xmbhcrVadA6vy1vtAdnJP7PjH7WogJ42YXR55NK4YZvjaJ22ypR3Xabnj2AEMhB9dgLwauLochDW2h9gJw9ERWn"
+    )
 
-    solana_tracker = SolanaTracker(keypair, "https://rpc.solanatracker.io/public?advancedTx=true")
+    solana_tracker = SolanaTracker(
+        keypair, "https://rpc.solanatracker.io/public?advancedTx=true"
+    )
 
     rate_response = await solana_tracker.get_rate(
         "So11111111111111111111111111111111111111112",  # From Token
@@ -44,4 +48,5 @@ async def rate():
 
 if __name__ == "__main__":
     import asyncio
+
     asyncio.run(rate())

@@ -32,7 +32,6 @@ class TradePairEntity:
     txid_url: Optional[str] = None
 
     coin: Optional[CoinInfoEntity] = None
-    # is_jupiter: Optional[bool] = None
 
     def db_entity(self, coin_db=None, holders=None):
         return TradePair(

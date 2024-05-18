@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from .tradepair import TradePairEntity
 from .coin_info import CoinInfoEntity
-from typing import Optional, Union
+from typing import Optional
 from datetime import datetime
 from src.database.orm import Portfolio
 

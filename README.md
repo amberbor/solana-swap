@@ -1,5 +1,5 @@
 
-# Solana Swap by Solana Tracker
+# Solana Swap
 
 Easiest way to add Solana based swaps to your project.
 Uses the Solana Swap api from [https://docs.solanatracker.io](https://docs.solanatracker.io)
@@ -27,7 +27,8 @@ https://www.solanatracker.io
 
 ```python
 from solders.keypair import Keypair
-from solanatracker import SolanaTracker
+from src.app.services.solanatracker import SolanaTracker
+
 
 async def swap():
     keypair = Keypair.from_base58_string("YOUR_SECRET_KEY_HERE")
@@ -50,8 +51,10 @@ async def swap():
     print("Transaction ID:", txid)
     print("Transaction URL:", f"https://explorer.solana.com/tx/{txid}")
 
+
 if __name__ == "__main__":
     import asyncio
+
     asyncio.run(swap())
 ```
 

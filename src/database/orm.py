@@ -84,16 +84,22 @@ class Configurations(Base):
     __tablename__ = "configurations"
     id = Column(Integer, primary_key=True, autoincrement=True)
     solana_wallet_address = Column(String(300), nullable=False)
-    dev_percentage_min = Column(Float, default=0)
-    dev_percentage_max = Column(Float, nullable=False)
     current_holders = Column(Integer, default=2)
-    capital_coin = Column(Float, nullable=False, default=5000)
     amount_to_buy = Column(Float, nullable=False, default=0.05)
     buy_slippage_rate = Column(Float, nullable=False, default=10)
     sell_slippage_rate = Column(Float, nullable=False, default=10)
     expected_profit = Column(Float, nullable=False, default=2)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
+    market_cap_min = Column(Float, nullable=False, default=4750)
+    market_cap_max = Column(Float, nullable=False, default=10000)
+
     first_wait_seconds = Column(Integer, default=60)
     second_wait_seconds = Column(Integer, default=30)
     third_wait_seconds = Column(Integer, default=15)
+
+    priority_fee_buy = Column(Integer, default=0)
+    priority_fee_sell = Column(Integer, default=0)
+
+    dev_percentage_min = Column(Float, default=0)
+    dev_percentage_max = Column(Float, nullable=False)

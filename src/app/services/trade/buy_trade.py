@@ -11,7 +11,8 @@ class BuyTrade(Trade):
         dev_percentage_min: float = 1,
         dev_percentage_max: float = 5,
         current_holders: int = 2,
-        capital_coin: float = 5000,
+        market_cap_min: float = 5000,
+        market_cap_max: float = 5000,
         amount_to_buy: float = None,
         buy_slippage_rate: float = None,
         solana_wallet_address: float = None,
@@ -19,7 +20,8 @@ class BuyTrade(Trade):
         self.dev_percentage_min = dev_percentage_min
         self.dev_percentage_max = dev_percentage_max
         self.current_holders = current_holders
-        self.capital_coin = capital_coin
+        self.market_cap_min = market_cap_min
+        self.market_cap_max = market_cap_max
         self.amount_to_buy = amount_to_buy
         self.slippage_rate = buy_slippage_rate
         super().__init__(solana_wallet_address)
@@ -78,3 +80,27 @@ class BuyTrade(Trade):
         )
 
         return response
+
+    async def calculate_swap_coin(self, coin, holders: int) -> bool:
+        """
+        Calculates & Decides based on coin_ information / Configs if to buy or not this coin
+        1. Calculate based on dev percentage
+        2. Calculate based on Market Cap
+        3. Calculate based on number of coin holders at this time
+        """
+
+        try:
+            coin_dev_percentage = coin.dev_percentage
+            if (
+                coin_dev_percentage is not None  # If dev % not determined pass
+                and self.dev_percentage_min
+                <= coin_dev_percentage
+                <= self.dev_percentage_max
+            ):
+                if self.market_cap_min <= coin.cap <= self.market_cap_max:
+                    if holders <= self.current_holders:
+                        return True
+            return False
+        except Exception as e:
+            logger.info("Coin NOT PASSED checks to trade...")
+            return False

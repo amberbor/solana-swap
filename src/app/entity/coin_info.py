@@ -1,5 +1,4 @@
 import re
-from src.app.services.database import DatabaseManager
 from src.database.orm import CoinInfo
 
 

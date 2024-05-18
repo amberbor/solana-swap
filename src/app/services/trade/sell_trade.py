@@ -74,10 +74,15 @@ class SellTrade(Trade):
 
         txid = current_swap.txid
         if RUN_ENV == "PROD":
-            txid = await self.solana_tracker.perform_swap(current_swap)
+            try:
+                swap_response = await self.solana_tracker.perform_swap(current_swap)
+                return parse_tradepair_response(
+                    swap_response["rate"], swap_response["txn"]
+                )
 
-        if not txid:
-            raise Exception("Swap failed")
+            except Exception as e:
+                logger.error(f"Sell Transaction Failed: {e}")
+                return False
 
         response = current_swap
 

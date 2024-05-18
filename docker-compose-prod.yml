@@ -1,0 +1,109 @@
+version: '3.8'
+
+services:
+  web_meme_coin:
+    build:
+      context: .
+      dockerfile: config/web/Dockerfile
+    image: meme_coin_image
+    container_name: meme_coin_container
+    ports:
+      - "8080:8080"
+    env_file:
+      - ./.env
+    depends_on:
+      - coin_db
+#      - celery_worker
+    volumes:
+      - ./src:/src
+    networks:
+      meme_coin:
+    restart: always
+
+  buy_job:
+    build:
+      context: .
+      dockerfile: config/web/Dockerfile
+    command: python -m src.app.use_case.buy_job  # Adjust the command according to your application's structure
+    volumes:
+      - ./src:/src
+    depends_on:
+      - coin_db
+    networks:
+      meme_coin:
+    restart: always
+
+  sell_job:
+    build: .
+    command: python -m src.app.use_case.sell_job  # Adjust the command according to your application's structure
+    volumes:
+      - ./src:/src
+    depends_on:
+      - coin_db
+    networks:
+      meme_coin:
+    restart: always
+
+  #  celery_worker:
+#    build:
+#      context: .
+#      dockerfile: ./config/celery/Dockerfile
+#    volumes:
+#      - ./src:/src
+#    depends_on:
+#      - insta_mongodb
+#    env_file:
+#        - ./.env
+#    deploy:
+#      mode: replicated
+#      replicas: 1
+#    networks:
+#      instagram:
+#
+#  celery_beat:
+#      image: insta_web
+#      depends_on:
+#        - web
+#      env_file:
+#        - ./.env
+#      networks:
+#        instagram:
+#      command: celery -A celery_worker.celery_app:app beat -l info --pidfile=
+
+  coin_db:
+    image: postgres:14.2
+    container_name: coin_db
+    env_file:
+      - ./.env
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      meme_coin:
+
+#  redis_server:
+#    image: "redis:latest"
+#    ports:
+#      - "6379:6379"
+#    networks:
+#      instagram:
+
+
+#  flower:
+#    image: "mher/flower"
+#    command: celery -A src.celery_worker.celery_app:app flower --port=5555 --broker=redis://redis:6379/0
+#    ports:
+#      - "5555:5555"
+#    restart: unless-stopped
+#    depends_on:
+#      - redis_server
+#    networks:
+#      instagram:
+
+
+volumes:
+  postgres_data:
+
+networks:
+  meme_coin:

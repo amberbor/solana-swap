@@ -1,17 +1,14 @@
 import asyncio
-from asgiref.sync import sync_to_async
-import logging
-
 from src.app.services.telegram import Telegram
 from src.app.services.trade import SellTrade
 from src.database.orm import Configurations, Portfolio
 from src.app.services.database import DatabaseManager
 
-logger = logging.getLogger(__name__)
+from src.custom_logger import logger
 
 
 async def job():
-    telegram = Telegram()
+    # telegram = Telegram()
     db = DatabaseManager()
     configs = db.get_last_record(entity=Configurations)
     sol = db.get_record(entity=Portfolio, id=1)  # Solana Amount
@@ -57,6 +54,4 @@ async def job():
 
 
 if __name__ == "__main__":
-    import asyncio
-
     asyncio.run(job())
