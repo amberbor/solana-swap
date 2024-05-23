@@ -1,5 +1,5 @@
 from solders.keypair import Keypair
-from src.app.services.solanatracker import SolanaTracker
+from app import SolanaTracker
 
 # async def swap():
 #     keypair = Keypair.from_base58_string("3xmbhcrVadA6vy1vtAdnJP7PjH7WogJ42YXR55NK4YZvjaJ22ypR3Xabnj2AEMhB9dgLwauLochDW2h9gJw9ERWn")

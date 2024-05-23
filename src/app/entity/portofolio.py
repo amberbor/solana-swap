@@ -3,7 +3,7 @@ from .tradepair import TradePairEntity
 from .coin_info import CoinInfoEntity
 from typing import Optional
 from datetime import datetime
-from src.database.orm import Portfolio
+from database.orm import Portfolio
 
 
 @dataclass(kw_only=True)

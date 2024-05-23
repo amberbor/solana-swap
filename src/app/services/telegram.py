@@ -1,18 +1,17 @@
-from asgiref.sync import sync_to_async
 from telethon.sync import TelegramClient, events
 from telethon.sessions import StringSession
 from telethon.errors.rpcbaseerrors import UnauthorizedError
 from telethon.errors.rpcerrorlist import AuthKeyUnregisteredError
 import logging
 import aioconsole
-from src.configs import (
+from configs import (
     TELEGRAM_API,
     TELEGRAM_HASH,
     TELEGRAM_PHONE_NUMBER,
     TELEGRAM_CHAT_ID,
     TELEGRAM_STRING_KEY,
 )
-from src.app.entity.coin_info import CoinInfoEntity
+from app.entity.coin_info import CoinInfoEntity
 
 logger = logging.getLogger(__name__)
 

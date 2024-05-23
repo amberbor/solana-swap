@@ -1,6 +1,6 @@
-from src.app.services.database import DatabaseManager
-from src.database.orm import Configurations
-from src.app.entity.tradepair import TradePairEntity
+from app.services.database import DatabaseManager
+from database.orm import Configurations
+from app.entity.tradepair import TradePairEntity
 
 
 def get_configurations(db_manager: DatabaseManager):

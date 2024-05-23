@@ -1,9 +1,9 @@
 from asgiref.sync import sync_to_async
 
-from src.app.services.telegram import Telegram
-from src.app.services.database import DatabaseManager
-from src.app.services.trade import Trade
-from src.api.models import Portofolio
+from app.services.telegram import Telegram
+from app.services.database import DatabaseManager
+from app.services.trade import Trade
+from api.models import Portofolio
 
 
 async def update_portofolio():

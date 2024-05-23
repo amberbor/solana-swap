@@ -1,10 +1,9 @@
 import asyncio
-from src.app.services.telegram import Telegram
-from src.app.services.trade import SellTrade
-from src.database.orm import Configurations, Portfolio
-from src.app.services.database import DatabaseManager
+from app.services.trade import SellTrade
+from database.orm import Configurations, Portfolio
+from app.services.database import DatabaseManager
 
-from src.custom_logger import logger
+from custom_logger import logger
 
 
 async def job():

@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 from typing import Optional
 from datetime import datetime
-from src.database.orm import TradePair
-from src.app.entity import CoinInfoEntity
+from database.orm import TradePair
+from app.entity import CoinInfoEntity
 
 
 @dataclass(kw_only=True)

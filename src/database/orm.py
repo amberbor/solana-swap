@@ -1,5 +1,4 @@
 from sqlalchemy import (
-    create_engine,
     Column,
     Integer,
     String,
@@ -9,9 +8,9 @@ from sqlalchemy import (
     DateTime,
     Text,
 )
-from sqlalchemy.orm import relationship, sessionmaker
+from sqlalchemy.orm import relationship
 from datetime import datetime
-from src.database.database_configuration import Base
+from database.database_configuration import Base
 
 
 def default_datetime():

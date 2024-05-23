@@ -5,7 +5,7 @@ from solders.keypair import Keypair
 from solders.transaction import Transaction
 from solders.signature import Signature
 from solana.rpc.api import Client
-from src.configs import RPC, KEYPAIR
+from configs import RPC, KEYPAIR
 
 
 class SolanaTracker:

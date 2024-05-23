@@ -1,4 +1,4 @@
-from src.custom_logger import logger
+from custom_logger import logger
 import logging
 
 logger_2 = logging.getLogger(__name__)

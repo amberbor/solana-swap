@@ -1,7 +1,7 @@
 from .trade import Trade
-from src.app.entity import TradePairEntity
-from src.configs import RUN_ENV
-from src.custom_logger import logger
+from app.entity import TradePairEntity
+from configs import RUN_ENV
+from custom_logger import logger
 
 
 class BuyTrade(Trade):

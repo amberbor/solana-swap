@@ -5,10 +5,11 @@ from solders.keypair import Keypair
 from solders.transaction import Transaction
 from solders.signature import Signature
 from solana.rpc.api import Client
-from src.configs import SOLANA_TRACKER_URL
+from configs import SOLANA_TRACKER_URL
 import logging
 
 logger = logging.getLogger(__name__)
+
 
 class SolanaTracker:
 
@@ -18,7 +19,9 @@ class SolanaTracker:
         self.keypair = keypair
         self.debug = debug
 
-    async def get_rate(self, from_token: str, to_token: str, amount: float, slippage: float) -> dict:
+    async def get_rate(
+        self, from_token: str, to_token: str, amount: float, slippage: float
+    ) -> dict:
         params = {
             "from": from_token,
             "to": to_token,

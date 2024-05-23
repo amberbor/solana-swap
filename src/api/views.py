@@ -1,5 +1,5 @@
 import asyncio
-from src.app.use_case.buy_job import job
+from app.use_case.buy_job import job
 from rest_framework.decorators import api_view
 from django.http import JsonResponse
 

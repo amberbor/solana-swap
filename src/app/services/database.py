@@ -1,6 +1,6 @@
-from src.database.connections import BaseDatabaseManager
+from database.connections import BaseDatabaseManager
 from sqlalchemy.exc import IntegrityError
-from src.custom_logger import logger
+from custom_logger import logger
 
 
 class DatabaseManager(BaseDatabaseManager):

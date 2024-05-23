@@ -1,8 +1,7 @@
 import asyncio
 from solders.keypair import Keypair
-from src.app.services.solanatracker import SolanaTracker
-from src.configs import SOLANA_TRACKER_URL, KEYPAIR, PAYER_PUBLIC_KEY
-from src.custom_logger import logger
+from app.services.solanatracker import SolanaTracker
+from configs import SOLANA_TRACKER_URL, KEYPAIR, PAYER_PUBLIC_KEY
 
 
 class Trade:

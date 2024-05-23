@@ -26,9 +26,11 @@ services:
       dockerfile: config/web/Dockerfile
     container_name: buy_meme_coin
     image: meme_coin_image
-    command: python -m src.app.use_case.buy_job  # Adjust the command according to your application's structure
+    command: python -m app.use_case.buy_job  # Adjust the command according to your application's structure
     volumes:
       - ./src:/src
+    env_file:
+      - ./.env
     depends_on:
       - coin_db
     networks:
@@ -39,11 +41,13 @@ services:
     build:
       context: .
       dockerfile: config/web/Dockerfile
-    command: python -m src.app.use_case.sell_job  # Adjust the command according to your application's structure
+    command: python -m app.use_case.sell_job  # Adjust the command according to your application's structure
     container_name: sell_meme_coin
     image: meme_coin_image
     volumes:
       - ./src:/src
+    env_file:
+      - ./.env
     depends_on:
       - coin_db
     networks:

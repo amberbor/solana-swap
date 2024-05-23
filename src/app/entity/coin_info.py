@@ -1,5 +1,5 @@
 import re
-from src.database.orm import CoinInfo
+from database.orm import CoinInfo
 
 
 class CoinInfoEntity:

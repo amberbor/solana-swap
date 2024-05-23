@@ -1,10 +1,10 @@
 import logging
 from .trade import Trade
-from src.configs import RUN_ENV
+from configs import RUN_ENV
 import asyncio
-from src.app.entity import TradePairEntity
+from app.entity import TradePairEntity
 from datetime import datetime, timedelta, timezone
-from src.app.helpers import parse_tradepair_response
+from app.helpers import parse_tradepair_response
 
 logger = logging.getLogger(__name__)
 

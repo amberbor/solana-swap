@@ -11,7 +11,7 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 
 from pathlib import Path
-from src.configs import (
+from configs import (
     POSTGRES_DB_PASSWORD,
     POSTGRES_DB_HOST,
     POSTGRES_DB_USER,

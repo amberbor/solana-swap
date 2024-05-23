@@ -1,8 +1,6 @@
-import asyncio
-import re
 import requests
 import certifi
-from src.app.entity.rug_check import RugCheckEntity
+from app.entity.rug_check import RugCheckEntity
 
 
 class RugCheck:

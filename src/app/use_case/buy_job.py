@@ -1,14 +1,14 @@
 import asyncio
 
-from src.app.services.telegram import Telegram, events, TELEGRAM_CHAT_ID
-from src.app.services.trade import BuyTrade
-from src.app.services.database import DatabaseManager
-from src.app.entity import PortofolioEntity
-from src.app.services.rug_check import RugCheck
-from src.database.orm import Configurations, Portfolio
-from src.app.entity import CoinInfoEntity
+from app.services.telegram import Telegram, events, TELEGRAM_CHAT_ID
+from app.services.trade import BuyTrade
+from app.services.database import DatabaseManager
+from app.entity import PortofolioEntity
+from app.services.rug_check import RugCheck
+from database.orm import Configurations, Portfolio
+from app.entity import CoinInfoEntity
 
-from src.custom_logger import logger
+from custom_logger import logger
 
 
 class BuyTradingBot:
