@@ -41,7 +41,7 @@ class BuyTradingBot:
 
         # holders = await rug_checker.check_rug(coin_info.mint_address)
         holders = 1
-
+        available_amount = self.sol > 0
         coin = CoinInfoEntity(event.message)
 
         logger.info("---------------------------------------------------------\n")
@@ -53,7 +53,7 @@ class BuyTradingBot:
         coin_mint_address = coin.mint_address
         passed_checks = self.rug_check.rug_check(coin_mint_address).pass_checks
 
-        if passed_checks:
+        if passed_checks and available_amount:
             if await self.trade.calculate_swap_coin(coin, holders):
                 trade = await self.trade.buy_coin(token_mint_address=coin_mint_address)
 

@@ -14,8 +14,8 @@ services:
     depends_on:
       - coin_db
 #      - celery_worker
-    volumes:
-      - ./src:/src
+#    volumes:
+#      - ./src:/src
     networks:
       meme_coin:
     restart: always
@@ -76,18 +76,6 @@ services:
 #      - redis_server
 #    networks:
 #      instagram:
-
-  standalone-chromium:
-      image: seleniarm/standalone-chromium:latest
-      ports:
-        - "4444:4444"
-        - "5900:5900"
-        - "7900:7900"
-      networks:
-        - meme_coin
-      shm_size: '2g'
-      environment:
-        - SE_OPTS=--session-timeout 7200
 
 volumes:
   postgres_data:
