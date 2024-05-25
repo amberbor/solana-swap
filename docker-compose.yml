@@ -13,12 +13,11 @@ services:
       - ./.env
     depends_on:
       - coin_db
-#      - celery_worker
-#    volumes:
-#      - ./src:/src
+    volumes:
+      - ./src:/src
     networks:
       meme_coin:
-    restart: always
+#    restart: always
 
 #  celery_worker:
 #    build:

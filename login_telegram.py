@@ -1,5 +1,5 @@
 
-from src.configs import TELEGRAM_API, TELEGRAM_HASH, TELEGRAM_PHONE_NUMBER
+from configs import TELEGRAM_API, TELEGRAM_HASH, TELEGRAM_PHONE_NUMBER
 print("yes")
 from telethon.sync import TelegramClient
 from telethon.sessions import StringSession

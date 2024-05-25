@@ -27,7 +27,7 @@ https://www.solanatracker.io
 
 ```python
 from solders.keypair import Keypair
-from src.app.services.solanatracker import SolanaTracker
+from meme_api.app import SolanaTracker
 
 
 async def swap():

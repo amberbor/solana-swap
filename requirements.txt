@@ -14,3 +14,4 @@ pyppeteer==2.0.0
 alembic==1.13.1
 aioconsole==0.7.1
 black==24.4.2
+django-configurations==2.5.1
