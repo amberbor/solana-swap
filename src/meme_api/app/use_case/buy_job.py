@@ -44,51 +44,47 @@ class BuyTradingBot:
         configs = self.configs
 
         # holders = await rug_checker.check_rug(coin_info.mint_address)
-        holders = 1
         available_amount = self.sol.amount > 0
         coin = CoinInfoEntity(event.message)
 
-        logger.info(f"Checking for : {str(coin.name)}")
-        logger.info(
-            f"DEV % : {str(coin.dev_percentage)} ---- CAP : {coin.cap} ---- HOLDR : {holders}"
-        )
+        logger.info(f"CHECKING for : {str(coin.name)} - {coin.symbol}")
 
         coin_mint_address = coin.mint_address
-        passed_checks = self.rug_check.rug_check(coin_mint_address).pass_checks
+        await self.rug_check.check(coin_mint_address, configs.current_holders, coin.name)
+        passed_checks = self.rug_check.pass_checks
+        market_cap = await self.trade.calculate_market_cap(coin.cap)
+        if passed_checks and available_amount and market_cap:
+            trade = await self.trade.buy_coin(token_mint_address=coin_mint_address)
 
-        if passed_checks and available_amount:
-            if await self.trade.calculate_swap_coin(coin, holders):
-                trade = await self.trade.buy_coin(token_mint_address=coin_mint_address)
+            coin_db = coin.db_entity()
 
-                coin_db = coin.db_entity()
+            trade.coin = coin
+            trade.holders = self.rug_check.holders
+            trade.traded = True
 
-                trade.coin = coin
-                trade.holders = holders
-                trade.traded = True
+            portofolio = PortofolioEntity(
+                trade_pair=trade, coin_info=coin, buy_type=True
+            )
 
-                portofolio = PortofolioEntity(
-                    trade_pair=trade, coin_info=coin, buy_type=True
-                )
+            portofolio_db = portofolio.db_entity(coin_db=coin_db)
 
-                portofolio_db = portofolio.db_entity(coin_db=coin_db)
+            try:
+                self.db.insert_record(new_record=portofolio_db)
+            except Exception as e:
+                pass
 
-                try:
-                    self.db.insert_record(new_record=portofolio_db)
-                except Exception as e:
-                    pass
+            self.sol.amount = self.sol.amount - trade.amount_in  # Update Amount
+            self.db.insert_record(self.sol)
 
-                self.sol.amount = self.sol.amount - trade.amount_in  # Update Amount
-                self.db.insert_record(self.sol)
-
-                logger.info(
-                    f"Transaction ID:, {coin.name}\n"
-                    f" COIN BOUGHT: \n"
-                    f"Paid Amount: {trade.amount_in}\n"
-                    f"Received Amount: {trade.amount_out}\n"
-                    f"Price: {trade.execution_price}\n"
-                    f"Fee: {trade.fee}\n"
-                    f"Platform Fee: {trade.platform_fee}\n"
-                )
+            logger.info(
+                f"Transaction ID:, {coin.name}\n"
+                f" COIN BOUGHT: \n"
+                f"Paid Amount: {trade.amount_in}\n"
+                f"Received Amount: {trade.amount_out}\n"
+                f"Price: {trade.execution_price}\n"
+                f"Fee: {trade.fee}\n"
+                f"Platform Fee: {trade.platform_fee}\n"
+            )
 
     async def run(self):
         self.telegram.client.add_event_handler(

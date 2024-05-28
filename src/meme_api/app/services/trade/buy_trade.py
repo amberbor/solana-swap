@@ -81,7 +81,7 @@ class BuyTrade(Trade):
 
         return response
 
-    async def calculate_swap_coin(self, coin, holders: int) -> bool:
+    async def calculate_market_cap(self, coin_cap) -> bool:
         """
         Calculates & Decides based on coin_ information / Configs if to buy or not this coin
         1. Calculate based on dev percentage
@@ -90,17 +90,10 @@ class BuyTrade(Trade):
         """
 
         try:
-            coin_dev_percentage = coin.dev_percentage
-            if (
-                coin_dev_percentage is not None  # If dev % not determined pass
-                and self.dev_percentage_min
-                <= coin_dev_percentage
-                <= self.dev_percentage_max
-            ):
-                if self.market_cap_min <= coin.cap <= self.market_cap_max:
-                    if holders <= self.current_holders:
-                        return True
-            return False
+            if not self.market_cap_min <= coin_cap <= self.market_cap_max:
+                logger.info(f"NOT PASSED: MARKET CAP not in : {self.market_cap_min} <= {coin_cap} <= {self.market_cap_max}")
+                return False
+            return True
         except Exception as e:
             logger.info("Coin NOT PASSED checks to trade...")
             return False
