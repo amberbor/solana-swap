@@ -1,2 +1,4 @@
 /.readme
 __pycache__
+.env
+/src/risks.log
