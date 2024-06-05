@@ -50,16 +50,20 @@ class BuyTradingBot:
         logger.info(f"CHECKING for : {str(coin.name)} - {coin.symbol}")
 
         coin_mint_address = coin.mint_address
-        await self.rug_check.check(coin_mint_address, configs.current_holders, coin.name)
+        await self.rug_check.check(coin_mint_address, configs, coin.name)
         passed_checks = self.rug_check.pass_checks
-        market_cap = await self.trade.calculate_market_cap(coin.cap)
+        market_cap = await self.trade.calculate_market_cap(coin.cap, coin.name)
+        logger.info(f"Passed Checks : {passed_checks} , Available Amount : {available_amount}, Market Cap : {market_cap}")
         if passed_checks and available_amount and market_cap:
+
+            logger.info(f"All checks are passed for {coin_mint_address} , going to buy it")
+
             trade = await self.trade.buy_coin(token_mint_address=coin_mint_address)
 
             coin_db = coin.db_entity()
 
             trade.coin = coin
-            trade.holders = self.rug_check.holders
+            trade.holders = len(self.rug_check.holders)
             trade.traded = True
 
             portofolio = PortofolioEntity(
@@ -71,6 +75,7 @@ class BuyTradingBot:
             try:
                 self.db.insert_record(new_record=portofolio_db)
             except Exception as e:
+                logger.info("Error in inserting portofolio in buy_job.py", e)
                 pass
 
             self.sol.amount = self.sol.amount - trade.amount_in  # Update Amount
@@ -84,7 +89,10 @@ class BuyTradingBot:
                 f"Price: {trade.execution_price}\n"
                 f"Fee: {trade.fee}\n"
                 f"Platform Fee: {trade.platform_fee}\n"
+                f"Coin Mint Address: {coin_mint_address}\n"
             )
+        else:
+            logger.info(f"CHECKS are not passed for Name: {coin.name} Mint address: {coin_mint_address}")
 
     async def run(self):
         self.telegram.client.add_event_handler(
