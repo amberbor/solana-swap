@@ -47,19 +47,19 @@ class SellTrade(Trade):
 
         self.profit = current_amount - amount_paid
 
-        if 2 <= nr_holders <= 3:
+        if 1 <= nr_holders <= 4:
             if wallet_coin.created_at < now - timedelta(
                 seconds=configs.first_wait_seconds
             ):
                 return True
 
-        if 3 <= nr_holders <= 4:
+        if 4 <= nr_holders <= 6:
             if wallet_coin.created_at < now - timedelta(
                 seconds=configs.second_wait_seconds
             ):
                 return True
 
-        if nr_holders >= 4:
+        if nr_holders >= 6:
             if wallet_coin.created_at < now - timedelta(
                 seconds=configs.third_wait_seconds
             ):

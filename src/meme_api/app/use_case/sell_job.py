@@ -1,4 +1,6 @@
 import asyncio
+from datetime import datetime
+
 from meme_api.app.services.trade import SellTrade
 from meme_api.database.orm import Configurations, Portfolio
 from meme_api.app.services.database import DatabaseManager
@@ -41,8 +43,10 @@ async def sell():
         wallet_coin.profit = trade.profit
 
         sol.amount += new_trade.amount_out  # Add amount of sol into account
+        sol.updated_at = datetime.now()
 
         new_wallet_coin = db.insert_record(wallet_coin)
+
         db.insert_record(sol)
 
         print("Transaction ID:")
@@ -53,6 +57,8 @@ async def sell():
             f"Profit: {new_wallet_coin.profit}\n"
             f"Fee: {new_trade.fee}\n"
             f"Platform Fee: {new_trade.platform_fee}\n"
+            f"My Balance: {sol.amount}\n"
+            f"Updated at: {sol.updated_at}\n"
         )
 
 
