@@ -42,7 +42,7 @@ class BuyTrade(Trade):
         logger.info("Token bought successfully")
 
         if not txid:
-            raise Exception("Swap failed")
+            raise Exception("Swap failed:")
 
         rate_response = swap_response["rate"]
 
@@ -91,7 +91,9 @@ class BuyTrade(Trade):
 
         try:
             if not self.market_cap_min <= coin_cap <= self.market_cap_max:
-                logger.info(f"MARKET CAP NOT PASSED: {coin_name} not in : {self.market_cap_min} <= {coin_cap} <= {self.market_cap_max}")
+                logger.info(
+                    f"MARKET CAP NOT PASSED: {coin_name} not in : {self.market_cap_min} <= {coin_cap} <= {self.market_cap_max}"
+                )
                 return False
             return True
         except Exception as e:

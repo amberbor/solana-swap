@@ -57,10 +57,10 @@ class SolanaTracker:
         url = f"{self.base_url}/swap"
         try:
             response = requests.get(url, params=params)
+            response.raise_for_status()
             return response.json()
-        except Exception as error:
-            print("Error fetching swap instructions:", error)
-            raise error
+        except Exception as e:
+            raise Exception(f"Error fetching swap instructions: {e}")
 
     async def perform_swap(self, swap_response: dict) -> str:
         serialized_transaction = base64.b64decode(swap_response["txn"])

@@ -2,6 +2,7 @@ import requests
 import certifi
 from meme_api.custom_logger import logger
 import logging
+from meme_api.configs import RUG_CHECK_USER_AGENT
 
 logger_2 = logging.getLogger(__name__)
 logger_2.setLevel(logging.INFO)
@@ -13,11 +14,13 @@ file_handler.setFormatter(formatter)
 
 logger_2.addHandler(file_handler)
 
+
 class RugCheck:
     """Scrape info for coins"""
 
     def __init__(self):
         self.pass_checks = True
+        self.holders = 0
 
     headers = {
         "Connection": "keep-alive",
@@ -25,7 +28,7 @@ class RugCheck:
         "X-Wallet-Address": "null",
         "Content-Type": "application/json",
         "sec-ch-ua-mobile": "?0",
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+        "User-Agent": RUG_CHECK_USER_AGENT,
         "sec-ch-ua-platform": '"macOS"',
         "Accept": "/",
         "Origin": "https://rugcheck.xyz",
@@ -55,84 +58,73 @@ class RugCheck:
                 verify=self.ca_bundle_path,
             )
             response.raise_for_status()
-            return response
+            return response.json()
         except requests.RequestException as e:
-            logger.error(f"Rug Check Request Error for {mint_address}: {e}")
-            return None
+            raise Exception(f"Rug Check Request Error {mint_address}: {e}")
 
     def calculate_pct(self, amount, total_supply, decimals):
         try:
-            full_amount = amount / (10 ** decimals)
-            pct = (full_amount / (total_supply / (10 ** decimals))) * 100
-            return pct
+            full_amount = amount / (10**decimals)
+            pct = (full_amount / (total_supply / (10**decimals))) * 100
+            return float(pct)
         except ZeroDivisionError:
             return 0
 
-    async def check(self, mint_address, config, coin_name):
-        self.pass_checks = True
-        response = self.get_rug_check(mint_address)
+    async def check(self, mint_address, configs, coin_name):
 
-        if response is None:
-            logger.info(f"RUG CHECK failed for {mint_address}. Response is None.")
+        try:
+            response = self.get_rug_check(mint_address)
+        except Exception as e:
             self.pass_checks = False
+            logger.error(f"{coin_name} : {e}")
             return
 
         try:
-            if response.status_code != 200:
-                logger.info(f"RUG CHECK Error status code: {response.status_code} for {coin_name}")
-                self.pass_checks = False
-                return
-
-            _response = response.json()
-
-            logger.info(f"PASS CHECK 1 {self.pass_checks}")
-
             # Check Holders
-            holders = _response.get("topHolders", [])
+            holders = response.get("topHolders", [])
             nr_holders = len(holders)
             self.holders = holders
 
-            total_supply = _response.get("token", {}).get("supply", 1)
-            decimals = _response.get("token", {}).get("decimals", 0)
-            twitter_ipfs = _response.get("tokenMeta", {}).get("uri", None)
-
-            if twitter_ipfs is not None:
-                twitter_data = self.get_ipfs_data(twitter_ipfs)
-                twitter = twitter_data.get('twitter', None)
-                if twitter is None:
-                    self.pass_checks = False
-
-            if len(holders) > 1:
-                holder_pct = holders[1].get('pct', None)
-                if holder_pct is None:
-                    holder_amount = holders[1].get('amount', 0)
-                    holder_pct = self.calculate_pct(holder_amount, total_supply, decimals)
-                dev_holder = float(holder_pct)
-            elif len(holders) > 0:
-                holder_pct = holders[0].get('pct', None)
-                if holder_pct is None:
-                    holder_amount = holders[0].get('amount', 0)
-                    holder_pct = self.calculate_pct(holder_amount, total_supply, decimals)
-                dev_holder = float(holder_pct)
-            else:
-                logger.info(f"Holders are {holders}")
-                dev_holder = float(110)
-                logger.warning(f"No holders found, defaulting dev holder to 110.")
-
-            logger.info(f"Number of holders: {nr_holders}, Dev holder percentage: {dev_holder} for {coin_name}")
-
-            if nr_holders > config.current_holders:
+            # Nr of HOLD should not be 0 or greater than max
+            if 0 < nr_holders > configs.current_holders:
                 self.pass_checks = False
-                logger.info(f"RUG CHECK NOT PASSED {coin_name}: {nr_holders} > {config.current_holders}")
-                logger.info(f"PASS CHECK 3 {self.pass_checks}")
+                logger.info(
+                    f"RUGCHECK NOT PASSED {coin_name}: HOLDERS - Nr.holders {nr_holders} > {configs.current_holders} MAX.holders | {mint_address}"
+                )
+                return False
 
-            if not (config.dev_percentage_min <= dev_holder <= config.dev_percentage_max):
+            # twitter_ipfs = response.get("tokenMeta", {}).get("uri", None)
+            # if twitter_ipfs is not None:
+            #     twitter_data = self.get_ipfs_data(twitter_ipfs)
+            #     twitter = twitter_data.get('twitter', None)
+            #     if twitter is None:
+            #         self.pass_checks = False
+
+            dev_holder = holders[1] if nr_holders > 2 else holders[0]
+            dev_holder_pct = dev_holder.get("pct", None)
+            if dev_holder_pct is None:
+                dev_holder_pct = self.calculate_pct(
+                    holder_amount=dev_holder.get("amount", 0),
+                    total_supply=response.get("token", {}).get("supply", 1),
+                    decimals=response.get("token", {}).get("decimals", 0),
+                )
+
+            if not (
+                configs.dev_percentage_min
+                <= dev_holder_pct
+                <= configs.dev_percentage_max
+            ):
                 self.pass_checks = False
-                logger.info(f"RUG CHECK NOT PASSED PERCENTAGE {coin_name}: {dev_holder}")
-                logger.info(f"PASS CHECK 4 {self.pass_checks}")
+                logger.info(
+                    f"RUGCHECK NOT PASSED {coin_name}: DEV PERCENTAGE {dev_holder_pct}% | {mint_address}"
+                )
+                return False
 
-            logger.info(f"PASS CHECK 5 {self.pass_checks}")
+            logger.info(
+                f"CHECKS PASSED {coin_name}: Nr HOLDR: {nr_holders}, DEV%: {dev_holder} | {mint_address}"
+            )
+            return self.pass_checks
 
         except Exception as e:
             logger.error(f"Rug Check Error for {coin_name}: {e}")
-
+            return False

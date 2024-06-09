@@ -14,7 +14,7 @@ class PortofolioEntity:
     profit: Optional[float | None] = None
     in_hold: Optional[bool] = False
     created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = datetime.now()
 
     trade_pair: Optional[TradePairEntity | None] = None
     coin_info: Optional[CoinInfoEntity | None] = None
@@ -22,6 +22,7 @@ class PortofolioEntity:
     buy_type: Optional[bool] = True
 
     def __post_init__(self):
+        self.updated_at = self.trade_pair.updated_at
         if self.trade_pair:
             self.amount = self.trade_pair.amount_out
             self.bought_at = self.trade_pair.execution_price
@@ -40,4 +41,5 @@ class PortofolioEntity:
             sold_at=self.sold_at,
             profit=self.profit,
             in_hold=self.in_hold,
+            updated_at=self.updated_at,
         )

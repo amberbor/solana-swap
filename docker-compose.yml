@@ -1,22 +1,22 @@
 version: '3.8'
 
 services:
-  web_meme_coin:
-    build:
-      context: .
-      dockerfile: config/web/Dockerfile
-    image: meme_coin_image
-    container_name: meme_coin_container
-    ports:
-      - "8080:8080"
-    env_file:
-      - ./.env
-    depends_on:
-      - coin_db
-    volumes:
-      - ./src:/src
-    networks:
-      meme_coin:
+#  web_meme_coin:
+#    build:
+#      context: .
+#      dockerfile: config/web/Dockerfile
+#    image: meme_coin_image
+#    container_name: meme_coin_container
+#    ports:
+#      - "8080:8080"
+#    env_file:
+#      - ./.env
+#    depends_on:
+#      - coin_db
+#    volumes:
+#      - ./src:/src
+#    networks:
+#      meme_coin:
 #    restart: always
 
 #  celery_worker:
@@ -56,6 +56,21 @@ services:
       - postgres_data:/var/lib/postgresql/data
     networks:
       meme_coin:
+
+
+  mitm:
+    build:
+      context: .
+      dockerfile: config/mitm/Dockerfile
+    image: mitm_service
+    volumes:
+      - .mitmproxy:/home/mitmproxy/.mitmproxy
+    ports:
+      - 8080:8080
+      - 8081:8081
+    networks:
+      meme_coin:
+
 
 #  redis_server:
 #    image: "redis:latest"

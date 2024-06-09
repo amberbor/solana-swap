@@ -26,7 +26,7 @@ class TradePairEntity:
     is_pump_fun: Optional[bool] = None
 
     created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = datetime.now()
 
     txid: Optional[str] = None
     txid_url: Optional[str] = None

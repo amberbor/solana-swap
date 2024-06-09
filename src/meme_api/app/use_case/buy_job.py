@@ -18,8 +18,6 @@ class BuyTradingBot:
     rug_check = RugCheck()
 
     def __init__(self):
-        self.configs = None
-        self.trade = None
 
         configs = self.db.get_last_record(entity=Configurations)
         self.trade = BuyTrade(
@@ -39,24 +37,31 @@ class BuyTradingBot:
 
     logger.info("Finished Initializing BUY Bot...")
 
-
     async def job(self, event):
-        configs = self.configs
+        try:
+            configs = self.configs
 
-        # holders = await rug_checker.check_rug(coin_info.mint_address)
-        available_amount = self.sol.amount > 0
-        coin = CoinInfoEntity(event.message)
+            available_amount = self.sol.amount > 0
+            coin = CoinInfoEntity(event.message)
 
-        logger.info(f"CHECKING for : {str(coin.name)} - {coin.symbol}")
+            logger.info(
+                f"CHECKING {coin.symbol} {str(coin.name)} {str(coin.sent_at)} (message time)"
+            )
 
-        coin_mint_address = coin.mint_address
-        await self.rug_check.check(coin_mint_address, configs, coin.name)
-        passed_checks = self.rug_check.pass_checks
-        market_cap = await self.trade.calculate_market_cap(coin.cap, coin.name)
-        logger.info(f"Passed Checks : {passed_checks} , Available Amount : {available_amount}, Market Cap : {market_cap}")
-        if passed_checks and available_amount and market_cap:
+            coin_mint_address = coin.mint_address
+            passed_checks = await self.rug_check.check(
+                mint_address=coin_mint_address, configs=configs, coin_name=coin.name
+            )
+            if not passed_checks:
+                return
 
-            logger.info(f"All checks are passed for {coin_mint_address} , going to buy it")
+            market_cap = await self.trade.calculate_market_cap(coin.cap, coin.name)
+            if not market_cap:
+                return
+
+            logger.info(
+                f"Passed Checks : {passed_checks} , Available Amount : {available_amount}, Market Cap : {market_cap}"
+            )
 
             trade = await self.trade.buy_coin(token_mint_address=coin_mint_address)
 
@@ -82,17 +87,18 @@ class BuyTradingBot:
             self.db.insert_record(self.sol)
 
             logger.info(
-                f"Transaction ID:, {coin.name}\n"
-                f" COIN BOUGHT: \n"
+                f"COIN BOUGHT: \n"
+                f"COIN NAME: {coin.name}\n"
                 f"Paid Amount: {trade.amount_in}\n"
                 f"Received Amount: {trade.amount_out}\n"
                 f"Price: {trade.execution_price}\n"
                 f"Fee: {trade.fee}\n"
                 f"Platform Fee: {trade.platform_fee}\n"
                 f"Coin Mint Address: {coin_mint_address}\n"
+                f"Time: {trade.updated_at}\n"
             )
-        else:
-            logger.info(f"CHECKS are not passed for Name: {coin.name} Mint address: {coin_mint_address}")
+        except Exception as e:
+            logger.info(f"Last Error : {e}")
 
     async def run(self):
         self.telegram.client.add_event_handler(
@@ -102,7 +108,6 @@ class BuyTradingBot:
         await self.telegram.client.run_until_disconnected()
 
 
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     bot = BuyTradingBot()
     asyncio.run(bot.run())
