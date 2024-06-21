@@ -1,0 +1,44 @@
+# mitmproxy configuration file
+
+# Proxy settings
+mode: regular  # can be 'regular', 'transparent', 'socks5', 'reverse', 'upstream'
+listen_host: * # Listen on all interfaces
+listen_port: 8080  # Port to listen on
+
+# SSL/TLS settings
+ssl_insecure: false  # Disable certificate verification
+#ssl_verify_upstream_trusted_ca: /path/to/trusted-ca-cert.pem  # Path to trusted CA certificates
+ssl_verify_upstream_cert: true  # Enable upstream certificate verification
+#certs: /Users/seharborici/solana-swap/certs  # Path to your certificate file
+certs:
+  - "*=/Users/seharborici/solana-swap/certs"
+
+# Proxy authentication
+#proxyauth: user:pass  # Proxy authentication in the form of "username:password"
+
+# HTTP settings
+#block_global: true  # Block all connections that don't match a specific host
+http2: true  # Enable HTTP/2
+
+# Scripting
+#script: /Users/seharborici/solana-swap/src/mitm_run.py  # Path to a custom Python script
+
+## Add-ons
+#addons:
+#  - ./addons/addon1.py  # Path to additional addon script
+#  - ./addons/addon2.py  # Path to another addon script
+
+# Logging
+verbosity: debug  # Logging verbosity: 'debug', 'info', 'warn', 'error'
+flow_detail: 3  # Detail level for flows in the event log
+logfile: ./logfile.log  # Path to log file
+
+# Other options
+anticache: false  # Disable caching
+showhost: true  # Show hostnames in the event log
+
+# Example of an inline script
+#scripts: |
+#  def request(flow):
+#    if "example.com" in flow.request.pretty_host:
+#      flow.request.host = "another-example.com"

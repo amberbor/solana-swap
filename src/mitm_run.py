@@ -1,81 +1,110 @@
-from mitmproxy import ctx
-from mitmproxy.websocket import WebSocketMessage
-import msgpack
+from mitmproxy import ctx, http
+from mitmproxy.script import concurrent
 import json
-from src.meme_api.custom_logger import logger
+import certifi
+import ssl
+from src.meme_api.app.entity.coin import CoinInfo
+from src.meme_api.mitm_socket.message_handler import StreamHandler
+
+from src.costum_mitm_logger import logg
+
+ctx.log.level = "error"
+
+WEBSOCKET_URL = "https://ws-token-sol-lb.tinyastro.io/cable"
+MAIN_URL = "photon-sol.tinyastro.io"
+PATHS = {
+    "search": f"/api/discover/search",
+}
+
 
 class WebSocketInterceptor:
+    buffer = b""
+
+    channels = {
+        "LpChannel": StreamHandler("LpChannel"),
+        "DiscoverLpChannel": StreamHandler("DiscoverLpChannel"),
+        "UsersChannel": StreamHandler("UsersChannel"),
+    }
+
+    endpoints = [
+        "https://photon-sol.tinyastro.io/api/lp/events_stats?pool_id=1096522"  # Check specific Coin Page
+        "https://photon-sol.tinyastro.io/api/lp/get_dev_purchases?pool_id=1096522&address=Bh6BuUCEXSDys5e5EMZaVrmY74mk6SnWvoPu9HENHEMH"  # Get Dev Puchases
+    ]
+
     def __init__(self):
-        self.target_url = "https://ws-token-sol-lb.tinyastro.io/cable"
+        self.ssl_ctx = ssl.create_default_context(cafile=certifi.where())
+        self.ssl_ctx.verify_mode = ssl.CERT_REQUIRED
+        # self.executor = ProcessPoolExecutor(max_workers=cpu_count() - 5)
+        # self.thread_executor = ThreadPoolExecutor()
 
-    def websocket_message(self, flow):
-        print(
-            f"Flow request URL is {flow.request.url}, target URL is {self.target_url}, match: {flow.request.url == self.target_url}"
-        )
-        if flow.request.url == self.target_url:
-            if flow.websocket is None:
-                return
-            for message in flow.websocket.messages:
-                if not message.from_client:
-                    self.process_server_message(message.content)
+    def load(self, loader):
+        # Set the SSL context to use certifi's CA bundle
+        options = ctx.options
+        options.certs.append(f"*={certifi.where()}")
 
-    def process_server_message(self, content):
-        try:
-            # Look for the MessagePack segment in the content
-            if b'"channel":"DiscoverLpChannel"' in content:
+    def configure(self, updated):
+        # Update the SSL context if options are updated
+        if "upstream_cert" in updated:
+            ctx.options.certs.append(f"*=certifi.where()")
 
-                # Extract the MessagePack portion of the content
-                msgpack_data = self.extract_msgpack_data(content)
-                if msgpack_data:
-                    # Decode the MessagePack content
-                    offset = 0
-                    length = len(msgpack_data)
+    @concurrent
+    def websocket_start(self, flow: http.HTTPFlow):
+        if flow.request.pretty_url == WEBSOCKET_URL:
+            logg.info(
+                f"WebSocket handshake started: {flow.client_conn.address} -> {flow.server_conn.address}"
+            )
 
-                    # Loop to unpack all valid MessagePack objects
-                    while offset < length:
-                        try:
-                            # Create a new unpacker for the current slice of the binary message
-                            unpacker = msgpack.Unpacker(
-                                raw=False, strict_map_key=False, use_list=True
-                            )
-                            unpacker.feed(msgpack_data[offset:])
+    @concurrent
+    async def websocket_end(self, flow: http.HTTPFlow):
+        if flow.request.pretty_url == WEBSOCKET_URL:
+            logg.info(
+                f"WebSocket connection closed: {flow.client_conn.address} -> {flow.server_conn.address} : {flow.websocket.close_code} {flow.websocket.close_reason}"
+            )
 
-                            # Unpack and print each MessagePack object
-                            for decoded_message in unpacker:
-                                print(f"Decoded message: {decoded_message}")
-                                logger.info(f"Decoded message: {decoded_message}")
+    @concurrent
+    async def response(self, flow: http.HTTPFlow):
+        request = flow.request
+        if request.host == MAIN_URL and PATHS.get("search") in request.path:
+            decoded_response = flow.response.content.decode("utf-8")
+            json_response = json.loads(decoded_response)
+            # self.thread_executor.submit(self.process_search_response, json_response)
+            self.process_search_response(json_response)
 
-                                # Update the offset to the current position in the buffer
-                                offset += unpacker.tell()
-                                break  # Process one valid MessagePack object at a time
+    def process_search_response(self, json_response):
+        for icoin in json_response["data"]:
+            coin = CoinInfo(icoin)
+            logg.info(coin)
 
-                        except msgpack.exceptions.ExtraData as e:
-                            # Skip non-MessagePack data by adjusting the offset
-                            offset += 1
+    # if flow.request
 
-                        except UnicodeDecodeError as e:
-                            # Handle potential Unicode errors gracefully
-                            offset += 1
-
-                        except Exception as e:
-                            # Print any other errors and break the loop
-                            print(f"Error: {e}")
-                            break
-
-        except Exception as e:
-            print(f"Error processing server message: {e}")
+    # @concurrent
+    # async def websocket_message(self, flow: http.HTTPFlow):
+    #     if flow.request.url == WEBSOCKET_URL:
+    #         message = flow.websocket.messages[-1]
+    #         if not message.from_client and message is not None:
+    #             channel, _id, content = self.extract_msgpack_data(message.content)
+    #             stream_handler = self.channels.get(channel, False)
+    #             if stream_handler:
+    #                 # if channel == 'DiscoverLpChannel':
+    #                 # self.executor.submit(stream_handler.process_stream, content)
+    #                 stream_handler.process_stream(content)
 
     def extract_msgpack_data(self, content):
         # Find the start of the MessagePack data
-        start = content.find(b"\x1a\x1f")
-        if start != -1:
-            msgpack_data = content[start:]
-            return msgpack_data
-        else:
-            print("No MessagePack data found in the content.")
-            return None
+        json_start = content.find(b"\x1a") + 2
+        json_end = content.find(b"}") + 1
+        json_part = content[json_start:json_end].decode("utf-8")
+        try:
+            decoded_json = json.loads(json_part)
+        except json.JSONDecodeError as e:
+            return False, False, False
+
+        channel_name = decoded_json.get("channel", False)
+        if not channel_name:
+            return False, False, False
+        _id = decoded_json.get("id", False)
+
+        return channel_name, _id, content[json_end + 1 :]
 
 
 addons = [WebSocketInterceptor()]
-
-# run with   command "mitmdump -s photon.py"

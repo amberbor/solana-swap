@@ -58,18 +58,18 @@ services:
       meme_coin:
 
 
-  mitm:
-    build:
-      context: .
-      dockerfile: config/mitm/Dockerfile
-    image: mitm_service
-    volumes:
-      - .mitmproxy:/home/mitmproxy/.mitmproxy
-    ports:
-      - 8080:8080
-      - 8081:8081
-    networks:
-      meme_coin:
+#  mitm:
+#    build:
+#      context: .
+#      dockerfile: config/mitm/Dockerfile
+#    image: mitm_service
+#    volumes:
+#      - .mitmproxy:/home/mitmproxy/.mitmproxy
+#    ports:
+#      - 8080:8080
+#      - 8081:8081
+#    networks:
+#      meme_coin:
 
 
 #  redis_server:

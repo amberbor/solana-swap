@@ -93,13 +93,13 @@ services:
     networks:
       meme_coin:
 
-  mitm:
-    image: mitmproxy/mitmproxy
-    volumes:
-      - .mitmproxy:/home/mitmproxy/.mitmproxy
-    ports:
-      - 8080:8080
-      - 8081:8081
+#  mitm:
+#    image: mitmproxy/mitmproxy
+#    volumes:
+#      - .mitmproxy:/home/mitmproxy/.mitmproxy
+#    ports:
+#      - 8080:8080
+#      - 8081:8081
 
 #  redis_server:
 #    image: "redis:latest"
